@@ -262,7 +262,7 @@ def main(argv=None) -> int:
             print(summary.to_string(index=False))
             print("")
 
-        if args.suite in {"grid", "all"}:
+        if args.suite == "grid":
             grid_dir = (
                 args.output if args.suite == "grid" else str(Path(args.output) / "grid")
             )
