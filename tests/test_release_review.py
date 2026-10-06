@@ -44,6 +44,21 @@ def _write_valid_campaign(root):
         }
     ).to_csv(linkage / "mechanistic_grid_summary.csv", index=False)
 
+    data_requirements = root / "data_requirements"
+    data_requirements.mkdir()
+    (data_requirements / "data_requirements.json").write_text(
+        json.dumps(
+            {
+                "status": "recommendations_available",
+                "passing_regimes": 2,
+                "pareto_minimum_regimes": [
+                    {"chromosomes": 10, "segregating_sites": 5000}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
     comparison = root / "external_comparison"
     comparison.mkdir()
     pd.DataFrame(
