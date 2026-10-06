@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import shlex
 
 import numpy as np
 import pandas as pd
@@ -70,39 +71,64 @@ def _candidate_projection_values(max_chromosomes: int) -> list[int]:
 
 
 def projection_retention_summary(counts: pd.DataFrame) -> pd.DataFrame:
-    """Summarize locus retention at plausible diploid projection sizes."""
+    """Summarize shared pairwise locus retention across projection sizes.
+
+    DIFLOW fits pairwise jSFS models, so the relevant quantity is not merely how
+    many loci each population retains independently. It is how many loci are
+    jointly usable for both populations in each pair.
+    """
     if counts.empty:
         raise ValueError("no allele-count records were produced from the VCF.")
 
     max_chromosomes = int(counts["called_chromosomes"].max())
     projections = _candidate_projection_values(max_chromosomes)
+    if not projections:
+        raise ValueError(
+            "fewer than two called chromosomes are available; a pairwise jSFS "
+            "projection cannot be recommended."
+        )
+
     populations = sorted(counts["population"].astype(str).unique())
+    if len(populations) < 2:
+        raise ValueError("at least two populations are required for pairwise inference.")
+
     key = ["chrom", "pos", "ref", "alt"]
+    total_loci = counts[key].drop_duplicates().shape[0]
+    called = counts.pivot_table(
+        index=key,
+        columns="population",
+        values="called_chromosomes",
+        aggfunc="first",
+    )
 
     rows = []
     for projection in projections:
-        usable_by_pop = {}
-        for population in populations:
-            subset = counts[counts["population"].astype(str) == population]
-            usable_by_pop[population] = int(
-                (subset["called_chromosomes"] >= projection).sum()
-            )
+        pair_counts = []
+        for i, pop_a in enumerate(populations):
+            for pop_b in populations[i + 1 :]:
+                if pop_a not in called.columns or pop_b not in called.columns:
+                    pair_counts.append(0)
+                    continue
+                shared = (
+                    called[[pop_a, pop_b]].fillna(-1).ge(projection).all(axis=1)
+                )
+                pair_counts.append(int(shared.sum()))
 
-        total_loci = counts[key].drop_duplicates().shape[0]
-        minimum_retained = min(usable_by_pop.values()) if usable_by_pop else 0
-        median_retained = float(np.median(list(usable_by_pop.values()))) if usable_by_pop else 0.0
+        minimum_pair = min(pair_counts) if pair_counts else 0
+        median_pair = float(np.median(pair_counts)) if pair_counts else 0.0
 
         rows.append(
             {
                 "projection_chromosomes": projection,
                 "total_loci": total_loci,
-                "minimum_population_loci": minimum_retained,
-                "median_population_loci": median_retained,
-                "minimum_population_retention": (
-                    minimum_retained / total_loci if total_loci else 0.0
+                "population_pairs": len(pair_counts),
+                "minimum_pair_loci": minimum_pair,
+                "median_pair_loci": median_pair,
+                "minimum_pair_retention": (
+                    minimum_pair / total_loci if total_loci else 0.0
                 ),
-                "median_population_retention": (
-                    median_retained / total_loci if total_loci else 0.0
+                "median_pair_retention": (
+                    median_pair / total_loci if total_loci else 0.0
                 ),
             }
         )
@@ -113,14 +139,15 @@ def projection_retention_summary(counts: pd.DataFrame) -> pd.DataFrame:
 def recommend_projection(summary: pd.DataFrame, *, retention_target: float = 0.80) -> int:
     """Choose the largest even projection retaining enough loci across populations.
 
-    The default heuristic seeks at least 80% locus retention in the worst
-    population. If no projection meets that target, the smallest available
-    projection is returned and the inspection table lets the user see the tradeoff.
+    The default heuristic seeks at least 80% shared-locus retention in the
+    worst-retained population pair. If no projection meets that target, the
+    smallest available projection is returned and the inspection table exposes
+    the tradeoff.
     """
     if summary.empty:
         raise ValueError("projection summary cannot be empty.")
     eligible = summary[
-        summary["minimum_population_retention"] >= retention_target
+        summary["minimum_pair_retention"] >= retention_target
     ]
     if not eligible.empty:
         return int(eligible["projection_chromosomes"].max())
@@ -199,9 +226,9 @@ def inspect_dataset(
     destination = str(output_dir or "diflow_results")
     command = (
         "diflow infer "
-        f"--vcf {vcf_path} "
-        f"--popmap {popmap_path} "
-        f"--coords {coordinates_path} "
+        f"--vcf {shlex.quote(str(vcf_path))} "
+        f"--popmap {shlex.quote(str(popmap_path))} "
+        f"--coords {shlex.quote(str(coordinates_path))} "
         f"--projection-chromosomes {projection} "
         f"--neighbors {neighbors} "
         f"--starts {preset_values['starts']} "
@@ -209,7 +236,7 @@ def inspect_dataset(
         f"--bootstrap-starts {preset_values['bootstrap_starts']} "
         f"--maxiter {preset_values['maxiter']} "
         f"--seed 42 "
-        f"--output {destination}"
+        f"--output {shlex.quote(destination)}"
     )
 
     if output_dir is not None:
