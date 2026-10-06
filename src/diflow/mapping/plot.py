@@ -24,6 +24,7 @@ def plot_directional_map(
     *,
     min_migration: float = 0.0,
     min_support: float | None = None,
+    include_ambiguous: bool = False,
     label_populations: bool = True,
     node_size: float = 48.0,
     min_arrow_width: float = 0.7,
@@ -32,18 +33,8 @@ def plot_directional_map(
 ):
     """Plot directed migration edges between geographic population coordinates.
 
-    Arrow direction encodes source -> recipient.
-    Arrow width encodes migration magnitude.
-    Arrow alpha encodes support when a support column is present.
-
-    The first renderer uses longitude/latitude directly and intentionally does
-    not invent a basemap. Boundary layers and projected publication maps will
-    be added in a dedicated cartographic backend.
-
-    Returns
-    -------
-    matplotlib.axes.Axes
-        Axes containing the completed directional-flow map.
+    Supported edges are solid. Ambiguous edges are dashed when explicitly
+    included. Unsupported edges are never drawn.
     """
     coords = validate_coordinates(coordinates)
     edge_table = validate_flows(flows)
@@ -54,6 +45,12 @@ def plot_directional_map(
         raise ValueError("min_support must lie within [0, 1].")
 
     edge_table = edge_table[edge_table["migration"] >= min_migration].copy()
+
+    if "status" in edge_table.columns:
+        edge_table = edge_table[edge_table["status"] != "unsupported"].copy()
+        if not include_ambiguous:
+            edge_table = edge_table[edge_table["status"] == "supported"].copy()
+
     if min_support is not None:
         if "support" not in edge_table.columns:
             raise ValueError("min_support requires a support column.")
@@ -99,6 +96,8 @@ def plot_directional_map(
         )
         support = float(getattr(row, "support", 1.0))
         alpha = 0.2 + 0.8 * support
+        status = getattr(row, "status", "supported")
+        linestyle = "--" if status == "ambiguous" else "-"
 
         arrow = FancyArrowPatch(
             (source["longitude"], source["latitude"]),
@@ -106,6 +105,7 @@ def plot_directional_map(
             arrowstyle="-|>",
             mutation_scale=10 + 2 * width,
             linewidth=width,
+            linestyle=linestyle,
             alpha=alpha,
             shrinkA=7,
             shrinkB=7,
