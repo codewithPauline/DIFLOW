@@ -171,12 +171,14 @@ __all__ += [
 
 from .comparators import (
     compare_method_files,
+    validate_matched_comparison,
     summarize_method_comparison,
     validate_comparator_table,
 )
 
 __all__ += [
     "compare_method_files",
+    "validate_matched_comparison",
     "summarize_method_comparison",
     "validate_comparator_table",
 ]
