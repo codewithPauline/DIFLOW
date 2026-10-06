@@ -42,7 +42,7 @@ def _write_valid_campaign(root):
             "coverage_a_to_b": [0.95, 0.94],
             "coverage_b_to_a": [0.96, 0.95],
         }
-    ).to_csv(linkage / "mechanistic_linkage_summary.csv", index=False)
+    ).to_csv(linkage / "mechanistic_grid_summary.csv", index=False)
 
     comparison = root / "external_comparison"
     comparison.mkdir()
@@ -101,3 +101,15 @@ def test_release_review_respects_stricter_criteria(tmp_path):
 
     assert summary["release_ready"] is False
     assert summary["checks_failed_or_missing"] > 0
+
+
+
+def test_release_review_accepts_legacy_linkage_filename(tmp_path):
+    root = tmp_path / "results"
+    _write_valid_campaign(root)
+    grid_path = root / "mechanistic_linkage" / "mechanistic_grid_summary.csv"
+    legacy_path = root / "mechanistic_linkage" / "mechanistic_linkage_summary.csv"
+    grid_path.rename(legacy_path)
+
+    _, summary = review_validation_campaign(root)
+    assert summary["release_ready"] is True
