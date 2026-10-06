@@ -70,6 +70,7 @@ def _fit_candidate(
     observed_spectrum,
     model_name: str,
     *,
+    initial: list[float] | tuple[float, ...] | None = None,
     grid_points: tuple[int, int, int] | None = None,
     maxiter: int = 100,
 ) -> CandidateFit:
@@ -77,6 +78,9 @@ def _fit_candidate(
     data_array = np.asarray(observed_spectrum, dtype=float)
     if data_array.ndim != 2 or data_array.sum() <= 0:
         raise ValueError("observed_spectrum must be a non-empty 2D spectrum.")
+
+    if model_name not in MODEL_SPECS:
+        raise ValueError(f"unknown demographic model: {model_name}")
 
     spec = MODEL_SPECS[model_name]
     ns = (data_array.shape[0] - 1, data_array.shape[1] - 1)
@@ -86,11 +90,23 @@ def _fit_candidate(
         largest = max(ns)
         grid_points = (largest + 10, largest + 20, largest + 30)
 
+    start = list(spec["initial"] if initial is None else initial)
+    if len(start) != len(spec["names"]):
+        raise ValueError(
+            f"initial point for {model_name} must have {len(spec['names'])} values."
+        )
+
+    for value, lo, hi in zip(start, spec["lower"], spec["upper"]):
+        if not lo <= float(value) <= hi:
+            raise ValueError(
+                f"initial value {value} lies outside model bounds [{lo}, {hi}]."
+            )
+
     model = spec["builder"](dadi)
     extrapolated = dadi.Numerics.make_extrap_log_func(model)
 
     optimized = dadi.Inference.optimize_log_lbfgsb(
-        spec["initial"],
+        start,
         data,
         extrapolated,
         list(grid_points),
