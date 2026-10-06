@@ -12,6 +12,7 @@ from diflow.demography import (
     AsymmetricIMParams,
     ModelScore,
     bootstrap_asymmetric_jsfs,
+    directional_support_for_estimate,
     expected_spectrum,
     fit_multistart,
     rank_models,
@@ -252,10 +253,10 @@ def run_decision_evidence_benchmark(
                     boot.m_a_to_b_lower > boot.m_b_to_a_upper
                     or boot.m_b_to_a_lower > boot.m_a_to_b_upper
                 )
-                point_direction_support = (
-                    boot.probability_a_to_b_stronger
-                    if m_ab >= m_ba
-                    else 1.0 - boot.probability_a_to_b_stronger
+                point_direction_support = directional_support_for_estimate(
+                    boot.probability_a_to_b_stronger,
+                    m_ab,
+                    m_ba,
                 )
 
                 row.update(
