@@ -18,6 +18,7 @@ migration rates are converted to dadi-scaled truth before coverage is assessed.
 
 from __future__ import annotations
 
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -492,6 +493,27 @@ def default_mechanistic_grid() -> tuple[MechanisticGridConfig, ...]:
     )
 
 
+def _run_mechanistic_grid_cell(task):
+    """Run one mechanistic-grid cell in an isolated process."""
+    index, config, kwargs = task
+    raw = run_mechanistic_linkage_calibration(
+        sequence_length=config.sequence_length,
+        recombination_rate=config.recombination_rate,
+        mutation_rate=config.mutation_rate,
+        seed=kwargs["seed"] + index * 1_000_000,
+        **{key: value for key, value in kwargs.items() if key != "seed"},
+    )
+    raw.insert(0, "grid_recombination_rate", config.recombination_rate)
+    raw.insert(1, "grid_mutation_rate", config.mutation_rate)
+    raw.insert(2, "grid_sequence_length", config.sequence_length)
+
+    summary = summarize_mechanistic_linkage(raw)
+    summary.insert(0, "recombination_rate", config.recombination_rate)
+    summary.insert(1, "mutation_rate", config.mutation_rate)
+    summary.insert(2, "sequence_length", config.sequence_length)
+    return index, raw, summary
+
+
 def run_mechanistic_linkage_grid(
     *,
     configs: tuple[MechanisticGridConfig, ...] | None = None,
@@ -507,40 +529,41 @@ def run_mechanistic_linkage_grid(
     directional_support_threshold: float = 0.95,
     asymmetry_threshold: float = 0.25,
     seed: int = 42,
+    workers: int = 1,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run mechanistic linkage calibration across recombination/data regimes."""
     configs = configs or default_mechanistic_grid()
-    raw_frames: list[pd.DataFrame] = []
-    summary_frames: list[pd.DataFrame] = []
+    if workers < 1:
+        raise ValueError("workers must be at least 1.")
 
-    for index, config in enumerate(configs):
-        raw = run_mechanistic_linkage_calibration(
-            replicates=replicates,
-            chromosomes_per_population=chromosomes_per_population,
-            nref=nref,
-            split_time_scaled=split_time_scaled,
-            sequence_length=config.sequence_length,
-            recombination_rate=config.recombination_rate,
-            mutation_rate=config.mutation_rate,
-            block_sizes_bp=block_sizes_bp,
-            bootstrap_replicates=bootstrap_replicates,
-            bootstrap_starts=bootstrap_starts,
-            maxiter=maxiter,
-            confidence=confidence,
-            directional_support_threshold=directional_support_threshold,
-            asymmetry_threshold=asymmetry_threshold,
-            seed=seed + index * 1_000_000,
-        )
-        raw.insert(0, "grid_recombination_rate", config.recombination_rate)
-        raw.insert(1, "grid_mutation_rate", config.mutation_rate)
-        raw.insert(2, "grid_sequence_length", config.sequence_length)
-        raw_frames.append(raw)
+    shared = {
+        "replicates": replicates,
+        "chromosomes_per_population": chromosomes_per_population,
+        "nref": nref,
+        "split_time_scaled": split_time_scaled,
+        "block_sizes_bp": block_sizes_bp,
+        "bootstrap_replicates": bootstrap_replicates,
+        "bootstrap_starts": bootstrap_starts,
+        "maxiter": maxiter,
+        "confidence": confidence,
+        "directional_support_threshold": directional_support_threshold,
+        "asymmetry_threshold": asymmetry_threshold,
+        "seed": seed,
+    }
+    tasks = [
+        (index, config, shared)
+        for index, config in enumerate(configs)
+    ]
 
-        summary = summarize_mechanistic_linkage(raw)
-        summary.insert(0, "recombination_rate", config.recombination_rate)
-        summary.insert(1, "mutation_rate", config.mutation_rate)
-        summary.insert(2, "sequence_length", config.sequence_length)
-        summary_frames.append(summary)
+    if workers == 1:
+        completed = [_run_mechanistic_grid_cell(task) for task in tasks]
+    else:
+        with ProcessPoolExecutor(max_workers=min(workers, len(tasks))) as executor:
+            completed = list(executor.map(_run_mechanistic_grid_cell, tasks))
+
+    completed.sort(key=lambda item: item[0])
+    raw_frames = [item[1] for item in completed]
+    summary_frames = [item[2] for item in completed]
 
     return (
         pd.concat(raw_frames, ignore_index=True),
