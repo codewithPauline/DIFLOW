@@ -97,3 +97,23 @@ def test_benchmark_export_command_parses():
     assert args.command == "benchmark-export"
     assert args.input == "recovery.csv"
     assert args.output == "diflow_standardized.csv"
+
+
+
+def test_data_requirements_command_parses():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "data-requirements",
+            "--grid-summary", "recovery_grid_summary.csv",
+            "--output", "requirements",
+            "--min-direction-accuracy", "0.92",
+            "--max-false-direction-rate", "0.04",
+            "--min-success-rate", "0.96",
+        ]
+    )
+    assert args.command == "data-requirements"
+    assert args.grid_summary == "recovery_grid_summary.csv"
+    assert args.min_direction_accuracy == 0.92
+    assert args.max_false_direction_rate == 0.04
+    assert args.min_success_rate == 0.96
