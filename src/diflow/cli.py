@@ -39,7 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
         "inspect",
         help="Inspect input data and recommend transparent analysis settings.",
     )
-    inspect.add_argument("--vcf", required=True, help="Input plain-text VCF.")
+    inspect.add_argument("--vcf", required=True, help="Input VCF or gzip-compressed .vcf.gz.")
     inspect.add_argument("--popmap", required=True, help="Sample-to-population table.")
     inspect.add_argument("--coords", required=True, help="Population coordinate CSV.")
     inspect.add_argument(
