@@ -82,6 +82,7 @@ def run_infer_pipeline(
     maxiter: int = 100,
     bootstrap_replicates: int = 0,
     bootstrap_starts: int = 5,
+    bootstrap_block_bp: int | None = None,
     prepare_only: bool = False,
     seed: int | None = None,
 ) -> PipelineResult:
@@ -93,6 +94,8 @@ def run_infer_pipeline(
         raise ValueError("bootstrap_replicates must be 0 or at least 2.")
     if bootstrap_starts < 1:
         raise ValueError("bootstrap_starts must be at least 1.")
+    if bootstrap_block_bp is not None and bootstrap_block_bp < 1:
+        raise ValueError("bootstrap_block_bp must be a positive integer.")
 
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -225,6 +228,7 @@ def run_infer_pipeline(
                 starts=bootstrap_starts,
                 maxiter=maxiter,
                 seed=None if seed is None else seed + pair_index * 10000,
+                block_size_bp=bootstrap_block_bp,
             )
 
             evidence = DirectionEvidence(
@@ -257,6 +261,9 @@ def run_infer_pipeline(
                     "m_b_to_a_upper": boot.m_b_to_a_upper,
                     "bootstrap_successful": boot.successful_replicates,
                     "bootstrap_attempted": boot.attempted_replicates,
+                    "bootstrap_resampling_unit": boot.resampling_unit,
+                    "bootstrap_blocks_used": boot.blocks_used,
+                    "bootstrap_loci_used": boot.loci_used,
                     "decision_reason": decision.reason,
                 }
             )
@@ -291,6 +298,11 @@ def run_infer_pipeline(
                 "maxiter": maxiter,
                 "bootstrap_replicates": bootstrap_replicates,
                 "bootstrap_starts": bootstrap_starts,
+                "bootstrap_block_bp": bootstrap_block_bp,
+                "bootstrap_resampling_unit": (
+                    "locus" if bootstrap_block_bp is None
+                    else f"{bootstrap_block_bp}-bp genomic block"
+                ),
                 "prepare_only": prepare_only,
                 "direction_status_note": (
                     "supported/ambiguous/unsupported uses bootstrap uncertainty "
