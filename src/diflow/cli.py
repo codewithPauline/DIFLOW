@@ -210,6 +210,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Minimum absolute migration asymmetry index.",
     )
     infer.add_argument(
+        "--map-crs",
+        default=None,
+        help=(
+            "Optional projected CRS for map output, e.g. EPSG:5070. "
+            "Default keeps longitude/latitude."
+        ),
+    )
+    infer.add_argument(
         "--polarized",
         action="store_true",
         help=(
@@ -551,6 +559,7 @@ def main(argv=None) -> int:
             min_directional_support=args.min_directional_support,
             min_abs_asymmetry=args.min_abs_asymmetry,
             polarized=args.polarized,
+            map_crs=args.map_crs,
             prepare_only=args.prepare_only,
             seed=args.seed,
         )
