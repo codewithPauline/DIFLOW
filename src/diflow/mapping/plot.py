@@ -7,6 +7,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch
 import pandas as pd
+from pyproj import Transformer
 
 from .flows import validate_coordinates, validate_flows
 
@@ -29,6 +30,7 @@ def plot_directional_map(
     node_size: float = 48.0,
     min_arrow_width: float = 0.7,
     max_arrow_width: float = 5.0,
+    target_crs: str | None = None,
     ax=None,
 ):
     """Plot directed migration edges between geographic population coordinates.
@@ -56,7 +58,30 @@ def plot_directional_map(
             raise ValueError("min_support requires a support column.")
         edge_table = edge_table[edge_table["support"] >= min_support].copy()
 
-    lookup = coords.set_index("population")
+    plot_coords = coords.copy()
+    x_column = "longitude"
+    y_column = "latitude"
+    x_label = "Longitude"
+    y_label = "Latitude"
+
+    if target_crs is not None:
+        transformer = Transformer.from_crs(
+            "EPSG:4326",
+            target_crs,
+            always_xy=True,
+        )
+        x, y = transformer.transform(
+            plot_coords["longitude"].to_numpy(),
+            plot_coords["latitude"].to_numpy(),
+        )
+        plot_coords["x"] = x
+        plot_coords["y"] = y
+        x_column = "x"
+        y_column = "y"
+        x_label = f"Easting ({target_crs})"
+        y_label = f"Northing ({target_crs})"
+
+    lookup = plot_coords.set_index("population")
     used = set(edge_table["source"]) | set(edge_table["destination"])
     missing = sorted(used - set(lookup.index))
     if missing:
@@ -66,17 +91,17 @@ def plot_directional_map(
         _, ax = plt.subplots(figsize=(8, 6))
 
     ax.scatter(
-        coords["longitude"],
-        coords["latitude"],
+        plot_coords[x_column],
+        plot_coords[y_column],
         s=node_size,
         zorder=3,
     )
 
     if label_populations:
-        for row in coords.itertuples(index=False):
+        for row in plot_coords.itertuples(index=False):
             ax.annotate(
                 str(row.population),
-                (row.longitude, row.latitude),
+                (getattr(row, x_column), getattr(row, y_column)),
                 xytext=(4, 4),
                 textcoords="offset points",
                 fontsize=8,
@@ -100,8 +125,8 @@ def plot_directional_map(
         linestyle = "--" if status == "ambiguous" else "-"
 
         arrow = FancyArrowPatch(
-            (source["longitude"], source["latitude"]),
-            (destination["longitude"], destination["latitude"]),
+            (source[x_column], source[y_column]),
+            (destination[x_column], destination[y_column]),
             arrowstyle="-|>",
             mutation_scale=10 + 2 * width,
             linewidth=width,
@@ -114,7 +139,7 @@ def plot_directional_map(
         )
         ax.add_patch(arrow)
 
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
     ax.set_aspect("equal", adjustable="datalim")
     return ax
