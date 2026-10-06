@@ -191,6 +191,24 @@ def run_recovery_benchmark(
     return pd.DataFrame(rows)
 
 
+def _coerce_bool_series(series: pd.Series, *, name: str) -> pd.Series:
+    """Parse strict boolean values without treating non-empty strings as True."""
+    def parse(value):
+        if isinstance(value, (bool, np.bool_)):
+            return bool(value)
+        if isinstance(value, (int, np.integer)) and value in (0, 1):
+            return bool(value)
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes"}:
+                return True
+            if normalized in {"false", "0", "no"}:
+                return False
+        raise ValueError(f"{name} contains invalid boolean value: {value!r}.")
+
+    return series.map(parse).astype(bool)
+
+
 def summarize_recovery(
     results: pd.DataFrame,
     *,
@@ -208,9 +226,13 @@ def summarize_recovery(
     if not required.issubset(results.columns):
         raise ValueError("benchmark results are missing required columns.")
 
+    parsed_success = _coerce_bool_series(results["success"], name="success")
+    working = results.copy()
+    working["success"] = parsed_success
+
     summaries: list[dict] = []
-    for scenario, group in results.groupby("scenario", sort=False):
-        successful = group[group["success"].astype(bool)].copy()
+    for scenario, group in working.groupby("scenario", sort=False):
+        successful = group[group["success"]].copy()
         truth_ab_all = group["true_m_a_to_b"].to_numpy(float)
         truth_ba_all = group["true_m_b_to_a"].to_numpy(float)
         inferred_directions = {
