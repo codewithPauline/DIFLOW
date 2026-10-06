@@ -230,6 +230,14 @@ def summarize_recovery(
     working = results.copy()
     working["success"] = parsed_success
 
+    for column in ("true_m_a_to_b", "true_m_b_to_a"):
+        values = pd.to_numeric(working[column], errors="coerce")
+        if values.isna().any() or (~np.isfinite(values)).any():
+            raise ValueError(f"{column} must be finite.")
+        if (values < 0).any():
+            raise ValueError(f"{column} must be non-negative.")
+        working[column] = values
+
     summaries: list[dict] = []
     for scenario, group in working.groupby("scenario", sort=False):
         successful = group[group["success"]].copy()
