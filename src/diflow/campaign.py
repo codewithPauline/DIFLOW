@@ -100,6 +100,11 @@ def write_validation_campaign(
                 f"--evidence {shlex.quote(str(result_paths['decision_evidence'] / 'decision_evidence.csv'))} "
                 f"--output {shlex.quote(str(results / 'threshold_calibration'))} --max-fpr 0.05"
             ),
+            "data_requirements": (
+                f"{executable} data-requirements "
+                f"--grid-summary {shlex.quote(str(result_paths['recovery_grid'] / 'recovery_grid_summary.csv'))} "
+                f"--output {shlex.quote(str(results / 'data_requirements'))}"
+            ),
             "release_review_command": (
                 f"{executable} release-review "
                 f"--results {shlex.quote(str(results))}"
