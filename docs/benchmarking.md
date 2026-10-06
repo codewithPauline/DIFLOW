@@ -346,5 +346,54 @@ Outputs include:
 - false-direction comparison PNG/PDF figures
 
 This benchmark tests whether block resampling improves uncertainty calibration
-when markers are correlated. A future mechanistic LD/recombination simulator
-would be an even stronger validation layer.
+when markers are correlated. DIFLOW now also includes a separate msprime/tskit
+mechanistic recombination validation layer.
+
+
+## Mechanistic recombination validation
+
+DIFLOW includes an optional msprime/tskit validation backend:
+
+    python -m pip install -e ".[dev,demography,validation]"
+
+Run:
+
+    diflow benchmark \
+      --suite mechanistic \
+      --output mechanistic_linkage/ \
+      --replicates 20 \
+      --chromosomes 20 \
+      --mechanistic-nref 10000 \
+      --mechanistic-sequence-length 2000000 \
+      --mechanistic-recombination-rate 1e-8 \
+      --mechanistic-mutation-rate 1e-8 \
+      --mechanistic-block-sizes 50000,100000,250000 \
+      --linked-bootstrap-replicates 100
+
+This layer simulates ancestry with recombination and neutral mutations directly.
+Forward A -> B migration is translated into msprime's backward-time B -> A
+lineage migration convention. Known per-generation rates are converted to dadi
+scaled migration truth as 2 * Nref * m before interval coverage is evaluated.
+
+The suite compares locus bootstrap with several candidate genomic block sizes.
+
+## Decision-evidence benchmark and threshold calibration
+
+Run a full classifier-evidence simulation:
+
+    diflow benchmark \
+      --suite decision \
+      --output decision_benchmark/ \
+      --replicates 50 \
+      --decision-bootstrap-replicates 100
+
+Then calibrate thresholds:
+
+    diflow calibrate \
+      --evidence decision_benchmark/decision_evidence.csv \
+      --output calibrated_thresholds/ \
+      --max-fpr 0.05
+
+This explicitly controls the tolerated false directional-positive rate under
+known symmetric truth while maximizing direction recovery under asymmetric
+truth.
