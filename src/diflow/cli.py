@@ -28,6 +28,7 @@ from diflow.validation import (
     review_validation_campaign,
     DataRequirementTargets,
     write_data_requirements,
+    write_validation_archive_manifest,
 )
 
 
@@ -199,6 +200,13 @@ def build_parser() -> argparse.ArgumentParser:
     campaign.add_argument("--hours", type=int, default=72)
     campaign.add_argument("--seed", type=int, default=42)
     campaign.add_argument("--email", default=None)
+
+    archive_validation = subparsers.add_parser(
+        "archive-validation",
+        help="Write SHA-256 manifests for completed validation evidence.",
+    )
+    archive_validation.add_argument("--results", required=True)
+    archive_validation.add_argument("--output", default=None)
 
     data_requirements = subparsers.add_parser(
         "data-requirements",
@@ -716,6 +724,15 @@ def main(argv=None) -> int:
         )
         print(f"DIFLOW validation campaign: {manifest}")
         print(f"Submit jobs with: bash {Path(args.output) / 'submit_all.sh'}")
+        return 0
+
+    if args.command == "archive-validation":
+        path = write_validation_archive_manifest(
+            args.results,
+            output_path=args.output,
+        )
+        print(f"DIFLOW validation archive manifest: {path}")
+        print(f"SHA-256 list: {path.with_suffix('.sha256')}")
         return 0
 
     if args.command == "data-requirements":
