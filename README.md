@@ -194,6 +194,25 @@ expansion and unsampled ghost introgression, run:
 diflow benchmark --suite forward --output forward_stress_results/
 ```
 
+## Linked-marker calibration
+
+To compare locus bootstrap with genomic block bootstrap under correlated marker
+blocks:
+
+```bash
+diflow benchmark \
+  --suite linked \
+  --output linked_calibration/ \
+  --replicates 20 \
+  --linked-blocks 50 \
+  --snps-per-block 10 \
+  --linked-block-bp 100000 \
+  --linked-bootstrap-replicates 100
+```
+
+The calibration measures confidence-interval coverage, interval width, and false
+strong-direction support under symmetric migration.
+
 ## Large recovery grid
 
 For a compute-intensive scaling study across sample sizes, SNP counts, and
@@ -341,7 +360,8 @@ DIFLOW/
 - [x] Secondary-contact stress benchmark
 - [x] Range-expansion forward-time stress test
 - [x] Ghost-population forward-time stress test
-- [ ] Linked-locus/block-bootstrap validation
+- [x] Correlated-block locus-vs-block bootstrap calibration framework
+- [ ] Mechanistic LD/recombination validation and final coverage calibration
 - [ ] Benchmark against established methods
 
 ## Scientific guardrails
