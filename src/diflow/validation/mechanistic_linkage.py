@@ -464,3 +464,193 @@ def write_mechanistic_linkage_calibration(
     summary.to_csv(outdir / "mechanistic_linkage_summary.csv", index=False)
     figures = plot_mechanistic_linkage(summary, outdir)
     return raw, summary, figures
+
+
+
+@dataclass(frozen=True)
+class MechanisticGridConfig:
+    """One recombination/marker-density cell in the linkage validation grid."""
+
+    recombination_rate: float
+    mutation_rate: float
+    sequence_length: int
+
+
+def default_mechanistic_grid() -> tuple[MechanisticGridConfig, ...]:
+    """Return a conservative multi-regime linkage validation grid.
+
+    Mutation rate and sequence length jointly control the expected number of
+    segregating markers, while recombination rate controls genealogy turnover.
+    """
+    recombination_rates = (1e-9, 1e-8, 1e-7)
+    mutation_rates = (5e-9, 1e-8, 2e-8)
+    sequence_length = 2_000_000
+    return tuple(
+        MechanisticGridConfig(r, mu, sequence_length)
+        for r in recombination_rates
+        for mu in mutation_rates
+    )
+
+
+def run_mechanistic_linkage_grid(
+    *,
+    configs: tuple[MechanisticGridConfig, ...] | None = None,
+    replicates: int = 20,
+    chromosomes_per_population: int = 20,
+    nref: int = 10000,
+    split_time_scaled: float = 0.75,
+    block_sizes_bp: tuple[int, ...] = (50_000, 100_000, 250_000),
+    bootstrap_replicates: int = 100,
+    bootstrap_starts: int = 5,
+    maxiter: int = 100,
+    confidence: float = 0.95,
+    directional_support_threshold: float = 0.95,
+    asymmetry_threshold: float = 0.25,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Run mechanistic linkage calibration across recombination/data regimes."""
+    configs = configs or default_mechanistic_grid()
+    raw_frames: list[pd.DataFrame] = []
+    summary_frames: list[pd.DataFrame] = []
+
+    for index, config in enumerate(configs):
+        raw = run_mechanistic_linkage_calibration(
+            replicates=replicates,
+            chromosomes_per_population=chromosomes_per_population,
+            nref=nref,
+            split_time_scaled=split_time_scaled,
+            sequence_length=config.sequence_length,
+            recombination_rate=config.recombination_rate,
+            mutation_rate=config.mutation_rate,
+            block_sizes_bp=block_sizes_bp,
+            bootstrap_replicates=bootstrap_replicates,
+            bootstrap_starts=bootstrap_starts,
+            maxiter=maxiter,
+            confidence=confidence,
+            directional_support_threshold=directional_support_threshold,
+            asymmetry_threshold=asymmetry_threshold,
+            seed=seed + index * 1_000_000,
+        )
+        raw.insert(0, "grid_recombination_rate", config.recombination_rate)
+        raw.insert(1, "grid_mutation_rate", config.mutation_rate)
+        raw.insert(2, "grid_sequence_length", config.sequence_length)
+        raw_frames.append(raw)
+
+        summary = summarize_mechanistic_linkage(raw)
+        summary.insert(0, "recombination_rate", config.recombination_rate)
+        summary.insert(1, "mutation_rate", config.mutation_rate)
+        summary.insert(2, "sequence_length", config.sequence_length)
+        summary_frames.append(summary)
+
+    return (
+        pd.concat(raw_frames, ignore_index=True),
+        pd.concat(summary_frames, ignore_index=True),
+    )
+
+
+def plot_mechanistic_linkage_grid(
+    summary: pd.DataFrame,
+    output_dir: str | Path,
+) -> list[Path]:
+    """Plot worst block-bootstrap coverage and false direction by grid cell."""
+    outdir = Path(output_dir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    paths: list[Path] = []
+
+    if summary.empty:
+        return paths
+
+    block = summary[summary["method"].astype(str).str.startswith("block_")].copy()
+    if block.empty:
+        return paths
+
+    coverage = block.copy()
+    coverage["minimum_coverage"] = coverage[
+        ["coverage_a_to_b", "coverage_b_to_a"]
+    ].min(axis=1)
+    collapsed = (
+        coverage.groupby(
+            ["recombination_rate", "mutation_rate"],
+            as_index=False,
+        )["minimum_coverage"]
+        .min()
+    )
+    pivot = collapsed.pivot(
+        index="recombination_rate",
+        columns="mutation_rate",
+        values="minimum_coverage",
+    )
+    fig, ax = plt.subplots(figsize=(7, 5))
+    image = ax.imshow(
+        pivot.to_numpy(dtype=float),
+        aspect="auto",
+        vmin=0,
+        vmax=1,
+    )
+    ax.set_xticks(range(len(pivot.columns)))
+    ax.set_xticklabels([f"{x:.1e}" for x in pivot.columns])
+    ax.set_yticks(range(len(pivot.index)))
+    ax.set_yticklabels([f"{x:.1e}" for x in pivot.index])
+    ax.set_xlabel("Mutation rate")
+    ax.set_ylabel("Recombination rate")
+    ax.set_title("Worst block-bootstrap CI coverage")
+    fig.colorbar(image, ax=ax, label="Coverage")
+    fig.tight_layout()
+    for suffix in ("png", "pdf"):
+        path = outdir / f"mechanistic_grid_coverage.{suffix}"
+        fig.savefig(path, dpi=300 if suffix == "png" else None, bbox_inches="tight")
+        paths.append(path)
+    plt.close(fig)
+
+    symmetric = block[block["scenario"] == "symmetric"].copy()
+    if not symmetric.empty:
+        false = (
+            symmetric.groupby(
+                ["recombination_rate", "mutation_rate"],
+                as_index=False,
+            )["false_directional_support_rate"]
+            .max()
+        )
+        pivot = false.pivot(
+            index="recombination_rate",
+            columns="mutation_rate",
+            values="false_directional_support_rate",
+        )
+        fig, ax = plt.subplots(figsize=(7, 5))
+        image = ax.imshow(
+            pivot.to_numpy(dtype=float),
+            aspect="auto",
+            vmin=0,
+            vmax=1,
+        )
+        ax.set_xticks(range(len(pivot.columns)))
+        ax.set_xticklabels([f"{x:.1e}" for x in pivot.columns])
+        ax.set_yticks(range(len(pivot.index)))
+        ax.set_yticklabels([f"{x:.1e}" for x in pivot.index])
+        ax.set_xlabel("Mutation rate")
+        ax.set_ylabel("Recombination rate")
+        ax.set_title("Worst false directional support under symmetry")
+        fig.colorbar(image, ax=ax, label="False-direction rate")
+        fig.tight_layout()
+        for suffix in ("png", "pdf"):
+            path = outdir / f"mechanistic_grid_false_direction.{suffix}"
+            fig.savefig(path, dpi=300 if suffix == "png" else None, bbox_inches="tight")
+            paths.append(path)
+        plt.close(fig)
+
+    return paths
+
+
+def write_mechanistic_linkage_grid(
+    *,
+    output_dir: str | Path,
+    **kwargs,
+) -> tuple[pd.DataFrame, pd.DataFrame, list[Path]]:
+    """Run and write the mechanistic linkage calibration grid."""
+    outdir = Path(output_dir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    raw, summary = run_mechanistic_linkage_grid(**kwargs)
+    raw.to_csv(outdir / "mechanistic_grid_replicates.csv", index=False)
+    summary.to_csv(outdir / "mechanistic_grid_summary.csv", index=False)
+    figures = plot_mechanistic_linkage_grid(summary, outdir)
+    return raw, summary, figures
