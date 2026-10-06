@@ -92,14 +92,27 @@ See [outputs.md](outputs.md) for the full output reference.
 
 ## Benchmark suites
 
-DIFLOW provides four benchmark modes:
+DIFLOW provides five benchmark modes:
 
     diflow benchmark --suite recovery --output recovery/
     diflow benchmark --suite stress --output stress/
     diflow benchmark --suite forward --output forward/
     diflow benchmark --suite grid --output grid/
+    diflow benchmark --suite linked --output linked/
 
 `--suite all` runs recovery, stress, and forward-time stress suites.
 
 The large recovery grid is excluded from `all` because it is substantially
 more computationally expensive and must be requested explicitly.
+
+
+The linked calibration suite has additional controls:
+
+    --linked-blocks
+    --snps-per-block
+    --linked-block-bp
+    --linkage-concentration
+    --linked-bootstrap-replicates
+
+These control the number and size of correlated marker blocks and the amount of
+bootstrap effort applied to each simulated dataset.
