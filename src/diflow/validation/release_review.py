@@ -160,9 +160,18 @@ def review_threshold_calibration(
         raise ValueError("selected threshold table must contain exactly one row.")
 
     row = selected.iloc[0]
-    fpr = float(row["false_directional_positive_rate"])
-    sensitivity = float(row["directional_sensitivity"])
-    accuracy = float(row["direction_accuracy_when_called"])
+    fpr = _validate_probability(
+        row["false_directional_positive_rate"],
+        "false_directional_positive_rate",
+    )
+    sensitivity = _validate_probability(
+        row["directional_sensitivity"],
+        "directional_sensitivity",
+    )
+    accuracy = _validate_probability(
+        row["direction_accuracy_when_called"],
+        "direction_accuracy_when_called",
+    )
 
     return [
         _metric_check(
