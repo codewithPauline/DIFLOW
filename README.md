@@ -240,6 +240,20 @@ explicit opt-in and is not included in `--suite all`.
 
 See [docs/benchmarking.md](docs/benchmarking.md).
 
+## Empirical data requirements
+
+After the large recovery grid has been run, DIFLOW can derive the smallest
+**tested** sample-size / marker-count regimes that satisfy release targets:
+
+```bash
+diflow data-requirements \
+  --grid-summary recovery_grid_results/recovery_grid_summary.csv \
+  --output data_requirements/
+```
+
+The output reports Pareto-minimum passing regimes rather than inventing a
+universal minimum sample size.
+
 ## Calibrate the decision rule
 
 Generate complete known-truth classifier evidence:
