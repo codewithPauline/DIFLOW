@@ -327,6 +327,7 @@ def review_external_comparison(
 
     metadata = json.loads(Path(metadata_path).read_text(encoding="utf-8"))
     strict = bool(metadata.get("require_complete_match", False))
+    method_versions = metadata.get("method_versions", {})
     estimands = [
         str(value).strip()
         for value in metadata.get("estimands", [])
@@ -345,6 +346,23 @@ def review_external_comparison(
                 detail=(
                     "Release-grade external comparisons must use identical "
                     "simulation keys across methods."
+                ),
+            ),
+            _metric_check(
+                section="external_comparison",
+                metric="external_method_versions",
+                observed=float(
+                    sum(
+                        1
+                        for name in external
+                        if method_versions.get(name)
+                    )
+                ),
+                target="version provenance for every external method",
+                passed=all(method_versions.get(name) for name in external),
+                detail=(
+                    "Version provenance: "
+                    + json.dumps(method_versions, sort_keys=True)
                 ),
             ),
             _metric_check(
