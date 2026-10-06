@@ -68,6 +68,19 @@ def _write_valid_campaign(root):
             "replicates": [50, 50],
         }
     ).to_csv(comparison / "method_comparison_summary.csv", index=False)
+    (comparison / "comparison_metadata.json").write_text(
+        json.dumps(
+            {
+                "direction_only": False,
+                "require_complete_match": True,
+                "asymmetry_threshold": 0.25,
+                "methods": ["DIFLOW", "ExternalMethod"],
+                "estimands": ["dadi_scaled_migration"],
+                "magnitude_metrics_reported": True,
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_release_review_passes_complete_campaign(tmp_path):
@@ -128,3 +141,18 @@ def test_release_review_accepts_legacy_linkage_filename(tmp_path):
 
     _, summary = review_validation_campaign(root)
     assert summary["release_ready"] is True
+
+
+
+def test_release_review_flags_missing_comparison_provenance(tmp_path):
+    root = tmp_path / "results"
+    _write_valid_campaign(root)
+    (root / "external_comparison" / "comparison_metadata.json").unlink()
+
+    _, summary = review_validation_campaign(root)
+
+    assert summary["release_ready"] is False
+    assert any(
+        blocker["metric"] == "comparison_provenance"
+        for blocker in summary["blockers"]
+    )
