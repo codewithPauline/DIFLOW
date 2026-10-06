@@ -29,20 +29,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Chromosome count used for both populations in each projected jSFS.",
     )
     infer.add_argument("--neighbors", type=int, default=None, help="k nearest neighbors.")
-    infer.add_argument(
-        "--max-distance-km",
-        type=float,
-        default=None,
-        help="Maximum geographic distance for candidate pairs.",
-    )
+    infer.add_argument("--max-distance-km", type=float, default=None)
     infer.add_argument("--starts", type=int, default=10, help="Optimization starts/model.")
-    infer.add_argument("--maxiter", type=int, default=100, help="Optimizer iterations/start.")
-    infer.add_argument("--seed", type=int, default=None, help="Random seed.")
+    infer.add_argument("--maxiter", type=int, default=100)
     infer.add_argument(
-        "--prepare-only",
-        action="store_true",
-        help="Stop after candidate pairs and projected jSFS construction.",
+        "--bootstrap-replicates",
+        type=int,
+        default=0,
+        help="Locus-bootstrap replicates; 0 disables bootstrap.",
     )
+    infer.add_argument(
+        "--bootstrap-starts",
+        type=int,
+        default=5,
+        help="Optimization starts within each bootstrap replicate.",
+    )
+    infer.add_argument("--seed", type=int, default=None)
+    infer.add_argument("--prepare-only", action="store_true")
 
     return parser
 
@@ -62,6 +65,8 @@ def main(argv=None) -> int:
             max_distance_km=args.max_distance_km,
             starts=args.starts,
             maxiter=args.maxiter,
+            bootstrap_replicates=args.bootstrap_replicates,
+            bootstrap_starts=args.bootstrap_starts,
             prepare_only=args.prepare_only,
             seed=args.seed,
         )
@@ -70,8 +75,10 @@ def main(argv=None) -> int:
         print(f"Pairwise rows: {len(result.pairwise_results)}")
         if args.prepare_only:
             print("Inference skipped (--prepare-only).")
+        elif args.bootstrap_replicates >= 2:
+            print("Bootstrap directional evidence classification completed.")
         else:
-            print("Direction labels are provisional pending jSFS uncertainty calibration.")
+            print("Direction labels are provisional; bootstrap is disabled.")
         return 0
 
     parser.error("unknown command")
