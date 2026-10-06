@@ -125,3 +125,12 @@ def test_block_bootstrap_rejects_nonpositive_window():
             block_size_bp=0,
             fit_function=fake_fit,
         )
+
+
+
+def test_directional_support_helper_is_public():
+    from diflow.demography import directional_support_for_estimate
+
+    assert directional_support_for_estimate(0.98, 1.0, 0.2) == pytest.approx(0.98)
+    assert directional_support_for_estimate(0.98, 0.2, 1.0) == pytest.approx(0.02)
+    assert directional_support_for_estimate(0.98, 0.5, 0.5) == pytest.approx(0.5)
