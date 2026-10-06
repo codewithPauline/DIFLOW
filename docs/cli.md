@@ -1,6 +1,6 @@
 # Command-line reference
 
-DIFLOW currently provides eleven main commands:
+DIFLOW currently provides twelve main commands:
 
 - diflow inspect
 - diflow infer
@@ -13,6 +13,7 @@ DIFLOW currently provides eleven main commands:
 - diflow campaign
 - diflow benchmark-export
 - diflow release-review
+- diflow data-requirements
 
 ## diflow inspect
 
@@ -230,3 +231,17 @@ regimes:
       --mechanistic-grid-workers 8
 
 The worker count parallelizes independent grid cells using isolated processes.
+
+
+## Empirical data requirements
+
+After the recovery grid completes, derive the smallest **tested** data regimes
+that meet the chosen accuracy, false-direction, and fit-success targets:
+
+    diflow data-requirements \
+      --grid-summary recovery_grid/recovery_grid_summary.csv \
+      --output data_requirements/
+
+Outputs include regime-level performance, Pareto-minimum passing regimes, and
+machine-readable/Markdown guidance. These recommendations apply only to the
+validated simulation space and are not universal biological minimums.
