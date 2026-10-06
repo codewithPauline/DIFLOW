@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shlex
 from pathlib import Path
 
 from .hpc import write_slurm_script
@@ -39,29 +40,37 @@ def write_validation_campaign(
     results = root / "results"
     results.mkdir(exist_ok=True)
 
+    executable = shlex.quote(str(diflow_executable))
+    result_paths = {
+        "recovery_grid": results / "recovery_grid",
+        "decision_evidence": results / "decision_evidence",
+        "linked_calibration": results / "linked_calibration",
+        "mechanistic_linkage": results / "mechanistic_linkage",
+    }
+
     jobs = {
         "recovery_grid": (
-            f"{diflow_executable} benchmark --suite grid "
-            f"--output {results / 'recovery_grid'} "
+            f"{executable} benchmark --suite grid "
+            f"--output {shlex.quote(str(result_paths['recovery_grid']))} "
             f"--replicates {replicates} --starts {starts} --seed {seed}"
         ),
         "decision_evidence": (
-            f"{diflow_executable} benchmark --suite decision "
-            f"--output {results / 'decision_evidence'} "
+            f"{executable} benchmark --suite decision "
+            f"--output {shlex.quote(str(result_paths['decision_evidence']))} "
             f"--replicates {replicates} --starts {starts} "
             f"--decision-bootstrap-replicates {bootstrap_replicates} "
             f"--seed {seed + 1000}"
         ),
         "linked_calibration": (
-            f"{diflow_executable} benchmark --suite linked "
-            f"--output {results / 'linked_calibration'} "
+            f"{executable} benchmark --suite linked "
+            f"--output {shlex.quote(str(result_paths['linked_calibration']))} "
             f"--replicates {replicates} --starts {min(starts, 5)} "
             f"--linked-bootstrap-replicates {bootstrap_replicates} "
             f"--seed {seed + 2000}"
         ),
         "mechanistic_linkage": (
-            f"{diflow_executable} benchmark --suite mechanistic "
-            f"--output {results / 'mechanistic_linkage'} "
+            f"{executable} benchmark --suite mechanistic "
+            f"--output {shlex.quote(str(result_paths['mechanistic_linkage']))} "
             f"--replicates {replicates} --starts {min(starts, 5)} "
             f"--linked-bootstrap-replicates {bootstrap_replicates} "
             f"--seed {seed + 3000}"
@@ -86,9 +95,9 @@ def write_validation_campaign(
         "jobs": {},
         "postprocessing": {
             "threshold_calibration": (
-                f"{diflow_executable} calibrate "
-                f"--evidence {results / 'decision_evidence' / 'decision_evidence.csv'} "
-                f"--output {results / 'threshold_calibration'} --max-fpr 0.05"
+                f"{executable} calibrate "
+                f"--evidence {shlex.quote(str(result_paths['decision_evidence'] / 'decision_evidence.csv'))} "
+                f"--output {shlex.quote(str(results / 'threshold_calibration'))} --max-fpr 0.05"
             ),
             "release_review": [
                 "Review recovery-grid direction accuracy and bias.",
@@ -115,7 +124,7 @@ def write_validation_campaign(
         manifest["jobs"][name] = {
             "script": str(script),
             "command": command,
-            "results": str(results / name),
+            "results": str(result_paths[name]),
         }
 
     manifest_path = root / "campaign_manifest.json"
@@ -126,7 +135,9 @@ def write_validation_campaign(
 
     submit_lines = ["#!/bin/bash", "set -euo pipefail", ""]
     for index, name in enumerate(jobs, start=1):
-        submit_lines.append(f"sbatch {root / f'{index:02d}_{name}.slurm'}")
+        submit_lines.append(
+            "sbatch " + shlex.quote(str(root / f"{index:02d}_{name}.slurm"))
+        )
     submit_lines.append("")
     submit_path = root / "submit_all.sh"
     submit_path.write_text("\n".join(submit_lines), encoding="utf-8")
