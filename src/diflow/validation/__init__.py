@@ -171,6 +171,8 @@ __all__ += [
 
 from .comparators import (
     compare_method_files,
+    standardize_diflow_benchmark,
+    write_standardized_diflow_benchmark,
     validate_matched_comparison,
     summarize_method_comparison,
     validate_comparator_table,
@@ -178,6 +180,8 @@ from .comparators import (
 
 __all__ += [
     "compare_method_files",
+    "standardize_diflow_benchmark",
+    "write_standardized_diflow_benchmark",
     "validate_matched_comparison",
     "summarize_method_comparison",
     "validate_comparator_table",
