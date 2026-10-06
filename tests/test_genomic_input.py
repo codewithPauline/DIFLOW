@@ -1,3 +1,4 @@
+import gzip
 from pathlib import Path
 
 import pandas as pd
@@ -44,3 +45,22 @@ def test_popmap_duplicate_rejected(tmp_path: Path):
     path.write_text("sample\tpopulation\nX\tA\nX\tB\n", encoding="utf-8")
     with pytest.raises(ValueError):
         read_popmap(path)
+
+
+
+def test_gzip_vcf_input(tmp_path):
+    vcf = tmp_path / "tiny.vcf.gz"
+    text = (
+        "##fileformat=VCFv4.2\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\ts1\ts2\n"
+        "1\t10\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\t1/1\n"
+    )
+    with gzip.open(vcf, "wt", encoding="utf-8") as handle:
+        handle.write(text)
+
+    popmap = pd.DataFrame(
+        {"sample": ["s1", "s2"], "population": ["A", "B"]}
+    )
+    counts = allele_counts_from_vcf(vcf, popmap)
+    assert len(counts) == 2
+    assert counts["called_chromosomes"].tolist() == [2, 2]
