@@ -77,3 +77,51 @@ def test_jsfs_bootstrap_requires_multiple_loci():
             replicates=10,
             fit_function=fake_fit,
         )
+
+
+
+def test_block_bootstrap_records_resampling_units():
+    result = bootstrap_asymmetric_jsfs(
+        _counts(),
+        "A",
+        "B",
+        chromosomes_a=4,
+        chromosomes_b=4,
+        replicates=12,
+        seed=3,
+        block_size_bp=25,
+        fit_function=fake_fit,
+    )
+
+    assert result.resampling_unit == "25-bp genomic block"
+    assert result.blocks_used == 3
+    assert result.loci_used == 6
+    assert result.successful_replicates == 12
+
+
+def test_block_bootstrap_requires_multiple_blocks():
+    with pytest.raises(ValueError, match="at least two resampling blocks"):
+        bootstrap_asymmetric_jsfs(
+            _counts(),
+            "A",
+            "B",
+            chromosomes_a=4,
+            chromosomes_b=4,
+            replicates=10,
+            block_size_bp=1000,
+            fit_function=fake_fit,
+        )
+
+
+def test_block_bootstrap_rejects_nonpositive_window():
+    with pytest.raises(ValueError, match="block_size_bp"):
+        bootstrap_asymmetric_jsfs(
+            _counts(),
+            "A",
+            "B",
+            chromosomes_a=4,
+            chromosomes_b=4,
+            replicates=10,
+            block_size_bp=0,
+            fit_function=fake_fit,
+        )
