@@ -191,6 +191,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Minimum absolute migration asymmetry index.",
     )
     infer.add_argument(
+        "--polarized",
+        action="store_true",
+        help=(
+            "Treat ALT as the derived allele and use an unfolded spectrum. "
+            "Use only when ancestral state was established upstream."
+        ),
+    )
+    infer.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -492,6 +500,7 @@ def main(argv=None) -> int:
             min_model_weight=args.min_model_weight,
             min_directional_support=args.min_directional_support,
             min_abs_asymmetry=args.min_abs_asymmetry,
+            polarized=args.polarized,
             prepare_only=args.prepare_only,
             seed=args.seed,
         )
