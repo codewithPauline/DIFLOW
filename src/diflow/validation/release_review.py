@@ -259,16 +259,24 @@ def review_linkage_coverage(
             )
         ]
 
-    success = pd.to_numeric(block["success_rate"], errors="coerce").dropna()
+    success = _validated_probability_series(
+        block["success_rate"],
+        name="mechanistic success_rate",
+    )
     min_success = float(success.min()) if not success.empty else None
 
+    coverage_a = _validated_probability_series(
+        block["coverage_a_to_b"],
+        name="coverage_a_to_b",
+    )
+    coverage_b = _validated_probability_series(
+        block["coverage_b_to_a"],
+        name="coverage_b_to_a",
+    )
     coverage_values = pd.concat(
-        [
-            pd.to_numeric(block["coverage_a_to_b"], errors="coerce"),
-            pd.to_numeric(block["coverage_b_to_a"], errors="coerce"),
-        ],
+        [coverage_a, coverage_b],
         ignore_index=True,
-    ).dropna()
+    )
     min_coverage = (
         float(coverage_values.min()) if not coverage_values.empty else None
     )
