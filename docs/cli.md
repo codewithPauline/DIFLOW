@@ -1,11 +1,57 @@
-# Command-line workflow
+# Command-line reference
 
-DIFLOW now provides a first integrated command-line workflow.
+DIFLOW currently provides two main commands:
 
-## Prepare inputs and spectra only
+- diflow inspect
+- diflow infer
 
-Use this mode to validate the genomic input layer and candidate graph without
-running demographic optimization:
+## diflow inspect
+
+Use inspect before expensive model fitting.
+
+    diflow inspect \
+      --vcf data.vcf \
+      --popmap populations.tsv \
+      --coords coordinates.csv
+
+Optional settings include:
+
+    --preset quick|standard|publication
+    --retention-target 0.80
+    --output inspection_results/
+
+Inspection reports dataset size, projection-retention tradeoffs, candidate geographic graph options, a recommended starting configuration, and a ready-to-copy inference command.
+
+See [inspection_workflow.md](inspection_workflow.md).
+
+## diflow infer
+
+Example:
+
+    diflow infer \
+      --vcf data.vcf \
+      --popmap populations.tsv \
+      --coords coordinates.csv \
+      --projection-chromosomes 8 \
+      --neighbors 4 \
+      --preset standard \
+      --output results/
+
+Important options include projection-chromosomes, neighbors, max-distance-km, preset, starts, maxiter, bootstrap-replicates, bootstrap-starts, seed, and prepare-only.
+
+Explicit optimization and bootstrap flags override preset values.
+
+## Presets
+
+| preset | model starts | bootstrap replicates | bootstrap starts | max iterations |
+| --- | ---: | ---: | ---: | ---: |
+| quick | 5 | 20 | 2 | 60 |
+| standard | 20 | 100 | 5 | 100 |
+| publication | 40 | 500 | 8 | 200 |
+
+The presets control computational effort. They do not replace model diagnostics, uncertainty evaluation, or scientific validation.
+
+## Prepare-only mode
 
     diflow infer \
       --vcf data.vcf \
@@ -16,48 +62,16 @@ running demographic optimization:
       --output results/ \
       --prepare-only
 
-## Run demographic inference
+## Bootstrap-enabled inference
 
-With the optional dadi backend installed:
+When bootstrap-replicates is at least 2, DIFLOW attaches locus-bootstrap uncertainty and passes the resulting evidence into the formal directional classifier.
 
-    python -m pip install -e ".[demography]"
+Without bootstrap, directional labels remain provisional.
 
-run:
+## Reproducibility
 
-    diflow infer \
-      --vcf data.vcf \
-      --popmap populations.tsv \
-      --coords coordinates.csv \
-      --projection-chromosomes 8 \
-      --neighbors 4 \
-      --starts 30 \
-      --output results/
+The CLI currently defaults to random seed 42. Users may override it with --seed.
 
 ## Outputs
 
-The workflow writes:
-
-- allele_counts.csv
-- candidate_pairs.csv
-- pairwise_results.csv
-- model_rankings.csv
-- run_metadata.csv
-- spectra/*.npy
-
-## Important current limitation
-
-The single-time-point demographic workflow does not yet have calibrated
-bootstrap or profile-likelihood uncertainty for directional migration.
-
-Therefore pairwise status values produced by the CLI are explicitly
-provisional:
-
-- candidate
-- ambiguous
-- unsupported
-
-They must not yet be interpreted as final supported/unsupported biological
-direction calls.
-
-The formal supported/ambiguous/unsupported decision engine will be connected
-to this workflow after jSFS uncertainty estimation is implemented.
+See [outputs.md](outputs.md) for the full output reference.
