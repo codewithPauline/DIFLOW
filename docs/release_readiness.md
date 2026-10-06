@@ -61,3 +61,27 @@ Slurm scripts, submission helper, and machine-readable campaign manifest.
 
 This reduces the risk that release claims depend on undocumented one-off
 simulation commands.
+
+
+## Automated release review
+
+Run:
+
+    diflow release-review \
+      --results validation_campaign/results/
+
+The default project policy targets are:
+
+- minimum direction accuracy: 0.90
+- maximum false-direction rate: 0.05
+- minimum directional sensitivity: 0.80
+- mechanistic-linkage interval coverage: 0.90 to 0.99
+- minimum fitting success rate: 0.95
+- at least one standardized external method in the comparison study
+
+These are configurable release-policy targets, not universal biological
+constants.
+
+The review fails when a required empirical output is missing. A passing software
+test suite therefore cannot be mistaken for a completed scientific validation
+campaign.
