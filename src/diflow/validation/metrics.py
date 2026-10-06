@@ -92,6 +92,12 @@ def direction_accuracy(
         raise ValueError("all direction arrays must have identical shapes.")
     if arrays[0].size == 0:
         raise ValueError("direction arrays cannot be empty.")
+    if not all(np.all(np.isfinite(arr)) for arr in arrays):
+        raise ValueError(
+            "direction arrays must contain only finite values."
+        )
+    if not math.isfinite(tolerance) or tolerance < 0:
+        raise ValueError("tolerance must be finite and non-negative.")
 
     correct = []
     for t_ab, t_ba, e_ab, e_ba in zip(*arrays):
