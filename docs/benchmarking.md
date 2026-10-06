@@ -161,3 +161,59 @@ It does not establish robustness to:
 - other real-data violations
 
 Those stress tests remain required before a validated release.
+
+
+## Demographic stress benchmark
+
+The second benchmark layer intentionally challenges DIFLOW with histories that
+can create misleading directional patterns.
+
+Run all currently implemented benchmark suites with:
+
+    diflow benchmark \
+      --suite all \
+      --output benchmark_results/ \
+      --replicates 10 \
+      --chromosomes 20 \
+      --sites 5000 \
+      --starts 10
+
+Run only the stress suite with:
+
+    diflow benchmark \
+      --suite stress \
+      --output stress_results/
+
+The current executable stress suite includes:
+
+- zero migration
+- symmetric migration with strongly unequal effective population sizes
+- symmetric secondary contact
+- A -> B asymmetric secondary contact
+- B -> A asymmetric secondary contact
+
+Each replicate is fit against the full candidate model set:
+
+- isolation
+- symmetric migration
+- asymmetric continuous migration
+- asymmetric secondary contact
+
+The stress summary reports:
+
+- optimization success rate
+- correct generating-model selection rate
+- provisional directional-signal rate
+- directional recovery rate when direction truly exists
+- false directional-signal rate when direction should not be inferred
+
+A provisional directional signal currently requires sufficient asymmetric-model
+Akaike weight, optimizer stability, and asymmetry magnitude. It is not the same
+as the final bootstrap-supported direction classification.
+
+### Why range expansion and ghost populations are not yet executable here
+
+Those scenarios require explicit generating models beyond the current
+two-population candidate-model family. DIFLOW will not approximate them with an
+unrelated model merely to check a roadmap box. They will be added when the
+simulation model represents the intended biology directly.
