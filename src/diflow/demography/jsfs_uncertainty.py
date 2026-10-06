@@ -190,13 +190,17 @@ def bootstrap_asymmetric_jsfs(
             spectrum += blocks[int(index)]
 
         try:
+            fit_kwargs = {
+                "starts": starts,
+                "seed": None if seed is None else seed + replicate + 1,
+                "maxiter": maxiter,
+            }
+            if fit_function is None:
+                fit_kwargs["polarized"] = polarized
             fit = fitter(
                 spectrum,
                 "asymmetric_migration",
-                starts=starts,
-                seed=None if seed is None else seed + replicate + 1,
-                maxiter=maxiter,
-                polarized=polarized,
+                **fit_kwargs,
             )
             m_ab = float(fit.best_parameters["m_a_to_b"])
             m_ba = float(fit.best_parameters["m_b_to_a"])
