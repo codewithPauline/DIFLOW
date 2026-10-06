@@ -3,6 +3,7 @@ import pytest
 
 from diflow.validation.comparators import (
     summarize_method_comparison,
+    standardize_diflow_benchmark,
     validate_matched_comparison,
     validate_comparator_table,
 )
@@ -68,3 +69,21 @@ def test_matched_comparison_rejects_mixed_estimands():
 
     with pytest.raises(ValueError, match="multiple estimands"):
         validate_matched_comparison(pd.concat([a, b], ignore_index=True))
+
+
+
+def test_standardize_diflow_benchmark_maps_truth_columns():
+    frame = pd.DataFrame(
+        {
+            "scenario": ["ab"],
+            "replicate": [1],
+            "true_m_a_to_b": [1.0],
+            "true_m_b_to_a": [0.25],
+            "estimated_m_a_to_b": [0.9],
+            "estimated_m_b_to_a": [0.3],
+        }
+    )
+    out = standardize_diflow_benchmark(frame)
+    assert "truth_m_a_to_b" in out.columns
+    assert "truth_m_b_to_a" in out.columns
+    assert out.iloc[0]["estimand"] == "dadi_scaled_migration"
