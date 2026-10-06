@@ -50,7 +50,17 @@ Geographic visualization of directional flow. The map should always be interpret
 
 ## run_metadata.csv
 
-Records important settings used for the run, supporting reproducibility.
+Records a compact summary of important analysis settings.
+
+## resolved_config.json
+
+Records the resolved analysis configuration used by the pipeline.
+
+## run_provenance.json
+
+Records input SHA-256 hashes, file sizes, software versions, platform
+information, UTC creation time, and the resolved settings. Keep this file with
+archived results so the exact inputs and software environment can be audited.
 
 ## Recommended interpretation order
 
@@ -77,3 +87,9 @@ Relevant fields include:
 
 This provenance matters when interpreting confidence intervals from linked
 marker datasets.
+
+
+## Mapping provenance
+
+The selected map projection, if any, is recorded as `map_crs`. If no map CRS
+is supplied, coordinates remain longitude/latitude.
