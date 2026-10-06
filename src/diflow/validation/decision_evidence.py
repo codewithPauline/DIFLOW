@@ -252,6 +252,11 @@ def run_decision_evidence_benchmark(
                     boot.m_a_to_b_lower > boot.m_b_to_a_upper
                     or boot.m_b_to_a_lower > boot.m_a_to_b_upper
                 )
+                point_direction_support = (
+                    boot.probability_a_to_b_stronger
+                    if m_ab >= m_ba
+                    else 1.0 - boot.probability_a_to_b_stronger
+                )
 
                 row.update(
                     {
@@ -265,7 +270,8 @@ def run_decision_evidence_benchmark(
                         "estimated_m_b_to_a": m_ba,
                         "asymmetry_index": asymmetry,
                         "preferred_direction": preferred,
-                        "directional_support": float(
+                        "directional_support": float(point_direction_support),
+                        "bootstrap_preferred_direction_support": float(
                             boot.preferred_direction_support
                         ),
                         "interval_separated": interval_separated,
