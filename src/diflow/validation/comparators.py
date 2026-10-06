@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 import json
 
@@ -62,6 +63,15 @@ def validate_comparator_table(
 
 
 
+
+
+def _diflow_version() -> str:
+    try:
+        return version("diflow")
+    except PackageNotFoundError:
+        return "unknown"
+
+
 def standardize_diflow_benchmark(
     frame: pd.DataFrame,
     *,
@@ -90,6 +100,7 @@ def standardize_diflow_benchmark(
         )
     out = out.loc[:, ordered].copy()
     out["estimand"] = str(estimand)
+    out["method_version"] = _diflow_version()
     return out
 
 
@@ -350,12 +361,25 @@ def compare_method_files(
                 if str(value).strip()
             }
         )
+    method_versions = {}
+    if "method_version" in combined.columns:
+        for method, group in combined.groupby("method", sort=True):
+            values = sorted(
+                {
+                    str(value).strip()
+                    for value in group["method_version"].dropna()
+                    if str(value).strip()
+                }
+            )
+            method_versions[str(method)] = values
+
     metadata = {
         "direction_only": bool(direction_only),
         "require_complete_match": bool(require_complete_match),
         "asymmetry_threshold": float(asymmetry_threshold),
         "methods": sorted(methods),
         "estimands": estimands,
+        "method_versions": method_versions,
         "magnitude_metrics_reported": not bool(direction_only),
     }
     (outdir / "comparison_metadata.json").write_text(
