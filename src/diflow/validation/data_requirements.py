@@ -46,6 +46,7 @@ def summarize_data_regimes(
         "chromosomes",
         "segregating_sites",
         "scenario",
+        "expected_direction",
         "success_rate",
         "direction_accuracy",
         "false_directional_positive_rate",
@@ -65,17 +66,21 @@ def summarize_data_regimes(
         success = pd.to_numeric(group["success_rate"], errors="coerce").dropna()
         min_success = float(success.min()) if not success.empty else np.nan
 
-        directional = group[
-            group["false_directional_positive_rate"].isna()
-        ].copy()
+        expected = group["expected_direction"].astype(str)
+        valid_labels = {"symmetric", "A->B", "B->A"}
+        unknown = sorted(set(expected) - valid_labels)
+        if unknown:
+            raise ValueError(
+                "unknown expected_direction labels: " + ", ".join(unknown)
+            )
+
+        directional = group[expected != "symmetric"].copy()
         accuracy = pd.to_numeric(
             directional["direction_accuracy"], errors="coerce"
         ).dropna()
         min_accuracy = float(accuracy.min()) if not accuracy.empty else np.nan
 
-        symmetric = group[
-            group["false_directional_positive_rate"].notna()
-        ].copy()
+        symmetric = group[expected == "symmetric"].copy()
         fpr = pd.to_numeric(
             symmetric["false_directional_positive_rate"], errors="coerce"
         ).dropna()
