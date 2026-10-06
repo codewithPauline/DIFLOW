@@ -27,3 +27,18 @@ def test_benchmark_accepts_stress_suite():
     )
     assert args.suite == "stress"
     assert args.replicates == 3
+
+
+
+def test_benchmark_accepts_grid_suite():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "benchmark",
+            "--output", "bench",
+            "--suite", "grid",
+            "--replicates", "2",
+        ]
+    )
+    assert args.suite == "grid"
+    assert args.replicates == 2
