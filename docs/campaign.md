@@ -57,3 +57,15 @@ are complete, run:
 
 The review writes CSV, JSON, and Markdown summaries and treats missing empirical
 studies as release blockers rather than silently ignoring them.
+
+
+## Archive the final evidence
+
+After external comparison and a passing release review, freeze the completed
+validation evidence:
+
+    diflow archive-validation \
+      --results validation_campaign/results/
+
+This writes JSON and SHA-256 manifests for every file in the validation results
+tree. The campaign manifest includes this archive command for reproducibility.
