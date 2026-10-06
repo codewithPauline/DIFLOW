@@ -256,3 +256,42 @@ The forward-stress summary reports:
 This layer is especially important because a method that performs well only
 when the generating and fitted models are identical has not demonstrated
 robustness to realistic demographic misspecification.
+
+
+## Large recovery grid
+
+For a broader scaling study, DIFLOW provides an explicit recovery-grid suite:
+
+    diflow benchmark \
+      --suite grid \
+      --output recovery_grid_results/ \
+      --replicates 10 \
+      --starts 10 \
+      --maxiter 100 \
+      --seed 42
+
+The default grid crosses:
+
+- 10, 20, and 40 sampled chromosomes per population
+- 1,000, 5,000, and 20,000 segregating sites
+- symmetric migration
+- weak, moderate, and strong A -> B asymmetry
+- weak, moderate, and strong B -> A asymmetry
+
+This produces 63 scenario/data-size cells before replicate expansion.
+
+Outputs include:
+
+- `recovery_grid_replicates.csv`
+- `recovery_grid_summary.csv`
+- `direction_accuracy_grid.png`
+- `direction_accuracy_grid.pdf`
+- `false_direction_rate_grid.png`
+- `false_direction_rate_grid.pdf`
+
+The grid is intentionally **not** included automatically in `--suite all`
+because it can require substantial compute. Users must opt in with
+`--suite grid`.
+
+The generated figures are validation summaries, not final manuscript figures;
+users should still inspect convergence and replicate counts before publication.
