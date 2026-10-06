@@ -20,6 +20,7 @@ from diflow.validation import (
     write_mechanistic_linkage_calibration,
     write_decision_evidence_benchmark,
     write_threshold_calibration,
+    load_calibrated_thresholds,
     compare_method_files,
     ReleaseCriteria,
     review_validation_campaign,
@@ -257,21 +258,29 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     infer.add_argument(
+        "--thresholds-file",
+        default=None,
+        help=(
+            "Optional selected_thresholds.csv/json from DIFLOW calibration. "
+            "Explicit threshold flags override file values."
+        ),
+    )
+    infer.add_argument(
         "--min-model-weight",
         type=float,
-        default=0.70,
+        default=None,
         help="Minimum asymmetric-model Akaike weight for directional support.",
     )
     infer.add_argument(
         "--min-directional-support",
         type=float,
-        default=0.95,
+        default=None,
         help="Minimum bootstrap directional support.",
     )
     infer.add_argument(
         "--min-abs-asymmetry",
         type=float,
-        default=0.25,
+        default=None,
         help="Minimum absolute migration asymmetry index.",
     )
     infer.add_argument(
@@ -710,6 +719,25 @@ def main(argv=None) -> int:
 
     if args.command == "infer":
         effort = _resolve_effort(args)
+        thresholds = {
+            "min_model_weight": 0.70,
+            "min_directional_support": 0.95,
+            "min_abs_asymmetry": 0.25,
+        }
+        if args.thresholds_file is not None:
+            calibrated = load_calibrated_thresholds(args.thresholds_file)
+            thresholds.update(
+                {
+                    "min_model_weight": calibrated.min_model_weight,
+                    "min_directional_support": calibrated.min_directional_support,
+                    "min_abs_asymmetry": calibrated.min_abs_asymmetry,
+                }
+            )
+        for key in thresholds:
+            explicit = getattr(args, key)
+            if explicit is not None:
+                thresholds[key] = explicit
+
         result = run_infer_pipeline(
             vcf_path=args.vcf,
             popmap_path=args.popmap,
@@ -723,9 +751,9 @@ def main(argv=None) -> int:
             bootstrap_replicates=effort["bootstrap_replicates"],
             bootstrap_starts=effort["bootstrap_starts"],
             bootstrap_block_bp=args.bootstrap_block_bp,
-            min_model_weight=args.min_model_weight,
-            min_directional_support=args.min_directional_support,
-            min_abs_asymmetry=args.min_abs_asymmetry,
+            min_model_weight=thresholds["min_model_weight"],
+            min_directional_support=thresholds["min_directional_support"],
+            min_abs_asymmetry=thresholds["min_abs_asymmetry"],
             polarized=args.polarized,
             map_crs=args.map_crs,
             workers=args.workers,
