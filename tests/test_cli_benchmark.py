@@ -80,3 +80,17 @@ def test_benchmark_accepts_mechanistic_grid_suite():
         ]
     )
     assert args.suite == "mechanistic-grid"
+
+
+
+def test_mechanistic_grid_accepts_worker_count():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "benchmark",
+            "--output", "mechanistic_grid",
+            "--suite", "mechanistic-grid",
+            "--mechanistic-grid-workers", "4",
+        ]
+    )
+    assert args.mechanistic_grid_workers == 4
