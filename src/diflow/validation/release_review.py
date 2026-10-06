@@ -33,6 +33,27 @@ def _validate_probability(value: float, name: str) -> float:
     return value
 
 
+def _validated_probability_series(
+    series: pd.Series,
+    *,
+    name: str,
+    allow_missing: bool = False,
+) -> pd.Series:
+    """Convert one release metric to probabilities without silent coercion."""
+    numeric = pd.to_numeric(series, errors="coerce")
+    invalid_parse = series.notna() & numeric.isna()
+    if invalid_parse.any():
+        raise ValueError(f"{name} contains non-numeric values.")
+
+    if not allow_missing and numeric.isna().any():
+        raise ValueError(f"{name} contains missing values.")
+
+    observed = numeric.dropna()
+    if ((observed < 0) | (observed > 1) | ~np.isfinite(observed)).any():
+        raise ValueError(f"{name} must contain only finite values within [0, 1].")
+    return numeric
+
+
 def _criteria_checked(criteria: ReleaseCriteria) -> ReleaseCriteria:
     values = asdict(criteria)
     for name, value in values.items():
@@ -78,7 +99,10 @@ def review_recovery_grid(
 
     checks: list[dict] = []
 
-    success = pd.to_numeric(summary["success_rate"], errors="coerce").dropna()
+    success = _validated_probability_series(
+        summary["success_rate"],
+        name="success_rate",
+    )
     observed_success = float(success.min()) if not success.empty else None
     checks.append(
         _metric_check(
@@ -98,9 +122,10 @@ def review_recovery_grid(
     directional = summary[
         summary["scenario"].astype(str) != "symmetric"
     ].copy()
-    accuracy = pd.to_numeric(
-        directional["direction_accuracy"], errors="coerce"
-    ).dropna()
+    accuracy = _validated_probability_series(
+        directional["direction_accuracy"],
+        name="direction_accuracy",
+    )
     observed_accuracy = float(accuracy.min()) if not accuracy.empty else None
     checks.append(
         _metric_check(
@@ -120,9 +145,10 @@ def review_recovery_grid(
     symmetric = summary[
         summary["false_directional_positive_rate"].notna()
     ].copy()
-    fpr = pd.to_numeric(
-        symmetric["false_directional_positive_rate"], errors="coerce"
-    ).dropna()
+    fpr = _validated_probability_series(
+        symmetric["false_directional_positive_rate"],
+        name="false_directional_positive_rate",
+    )
     observed_fpr = float(fpr.max()) if not fpr.empty else None
     checks.append(
         _metric_check(
