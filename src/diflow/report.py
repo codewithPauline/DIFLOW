@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from html import escape
+import base64
 import json
 from pathlib import Path
 
@@ -79,10 +80,10 @@ def write_html_report(
     map_path = root / "directional_map.png"
     map_html = ""
     if map_path.exists():
-        relative = map_path.relative_to(output.parent) if map_path.is_relative_to(output.parent) else map_path
+        encoded = base64.b64encode(map_path.read_bytes()).decode("ascii")
         map_html = (
             '<section><h2>Directional map</h2>'
-            f'<img class="map" src="{escape(str(relative))}" '
+            f'<img class="map" src="data:image/png;base64,{encoded}" '
             'alt="DIFLOW directional migration map"></section>'
         )
 
