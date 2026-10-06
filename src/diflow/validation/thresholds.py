@@ -250,11 +250,15 @@ def select_thresholds(
     eligible = eligible.dropna(
         subset=["false_directional_positive_rate", "directional_sensitivity"]
     )
+    eligible = eligible[
+        pd.to_numeric(eligible["called_fraction"], errors="coerce") > 0
+    ]
 
     if eligible.empty:
         raise RuntimeError(
-            "no tested threshold combination met the requested false-direction "
-            "target; expand the threshold grid or relax the target."
+            "no tested threshold combination both met the requested "
+            "false-direction target and produced at least one directional call; "
+            "expand the threshold grid or relax the target."
         )
 
     eligible["_accuracy"] = eligible["direction_accuracy_when_called"].fillna(-1)
