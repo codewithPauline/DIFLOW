@@ -70,6 +70,7 @@ def _validate_evidence_table(frame: pd.DataFrame) -> pd.DataFrame:
 
     required_values = [
         "truth_direction",
+        "preferred_direction",
         "asymmetric_model_weight",
         "directional_support",
         "asymmetry_index",
