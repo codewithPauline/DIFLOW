@@ -14,6 +14,8 @@ from diflow.validation import (
     write_stress_benchmark,
     write_linked_bootstrap_calibration,
     write_mechanistic_linkage_calibration,
+    write_decision_evidence_benchmark,
+    write_threshold_calibration,
 )
 
 
@@ -57,7 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--output", required=True, help="Benchmark output directory.")
     benchmark.add_argument(
         "--suite",
-        choices=("recovery", "stress", "forward", "grid", "linked", "mechanistic", "all"),
+        choices=("recovery", "stress", "forward", "grid", "linked", "mechanistic", "decision", "all"),
         default="all",
         help="Benchmark suite to run.",
     )
@@ -97,9 +99,32 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--mechanistic-recombination-rate", type=float, default=1e-8)
     benchmark.add_argument("--mechanistic-mutation-rate", type=float, default=1e-8)
     benchmark.add_argument(
+        "--decision-bootstrap-replicates",
+        type=int,
+        default=100,
+        help="Bootstrap replicates per dataset in decision-evidence calibration.",
+    )
+    benchmark.add_argument(
         "--mechanistic-block-sizes",
         default="50000,100000,250000",
         help="Comma-separated block sizes in bp for msprime linkage calibration.",
+    )
+
+    calibrate = subparsers.add_parser(
+        "calibrate",
+        help="Calibrate directional decision thresholds from known-truth evidence.",
+    )
+    calibrate.add_argument(
+        "--evidence",
+        required=True,
+        help="CSV from 'diflow benchmark --suite decision'.",
+    )
+    calibrate.add_argument("--output", required=True)
+    calibrate.add_argument(
+        "--max-fpr",
+        type=float,
+        default=0.05,
+        help="Maximum tolerated false directional-positive rate.",
     )
 
     infer = subparsers.add_parser(
@@ -253,6 +278,8 @@ def main(argv=None) -> int:
             parser.error("--linked-blocks must be at least 2.")
         if args.linked_bootstrap_replicates < 2:
             parser.error("--linked-bootstrap-replicates must be at least 2.")
+        if args.decision_bootstrap_replicates < 2:
+            parser.error("--decision-bootstrap-replicates must be at least 2.")
         if args.snps_per_block < 1:
             parser.error("--snps-per-block must be at least 1.")
         if args.linked_block_bp < args.snps_per_block:
@@ -392,11 +419,59 @@ def main(argv=None) -> int:
             print(f"Validation figures: {len(figures)}")
             print("")
 
+        if args.suite == "decision":
+            evidence = write_decision_evidence_benchmark(
+                output_dir=args.output,
+                replicates=args.replicates,
+                chromosomes=args.chromosomes,
+                segregating_sites=args.sites,
+                starts=args.starts,
+                bootstrap_replicates=args.decision_bootstrap_replicates,
+                bootstrap_starts=max(1, min(args.starts, 5)),
+                maxiter=args.maxiter,
+                seed=args.seed,
+            )
+            print("DIFLOW decision-evidence benchmark")
+            print(f"Evidence rows: {len(evidence)}")
+            print(f"Successful rows: {int(evidence['success'].astype(bool).sum())}")
+            print("")
+
         print(f"Results: {args.output}")
         print(
             "Recovery tests model-consistent identifiability; stress and forward "
             "suites challenge misspecification; grid evaluates scaling across data sizes."
         )
+        return 0
+
+    if args.command == "calibrate":
+        if not 0 <= args.max_fpr <= 1:
+            parser.error("--max-fpr must lie within [0, 1].")
+        selected, scan = write_threshold_calibration(
+            evidence_csv=args.evidence,
+            output_dir=args.output,
+            max_false_directional_positive_rate=args.max_fpr,
+        )
+        print("DIFLOW directional threshold calibration")
+        print(f"Threshold combinations evaluated: {len(scan)}")
+        print(f"Maximum false-direction rate: {args.max_fpr:.3f}")
+        print(f"Selected minimum model weight: {selected.min_model_weight:.3f}")
+        print(
+            "Selected minimum directional support: "
+            f"{selected.min_directional_support:.3f}"
+        )
+        print(
+            "Selected minimum absolute asymmetry: "
+            f"{selected.min_abs_asymmetry:.3f}"
+        )
+        print(
+            "Observed false-direction rate: "
+            f"{selected.false_directional_positive_rate:.3f}"
+        )
+        print(
+            "Directional sensitivity: "
+            f"{selected.directional_sensitivity:.3f}"
+        )
+        print(f"Results: {args.output}")
         return 0
 
     if args.command == "infer":
