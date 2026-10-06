@@ -21,9 +21,23 @@ Then submit:
 The generated script includes strict shell error handling, Slurm resource
 directives, job logs, and start/finish timestamps.
 
-## Important distinction
+## Pair-level process parallelism
 
-This provides an HPC execution workflow for the current inference command.
-DIFLOW does not yet claim internally benchmarked pair-level multiprocessing.
-True pair-parallel execution remains a separate optimization task because dadi
-fits are memory-intensive and backend/process behavior must be tested carefully.
+DIFLOW can also execute independent population pairs in isolated processes with
+`--workers N`.
+
+Example:
+
+    diflow infer \
+      ... \
+      --workers 4
+
+The default remains `--workers 1`.
+
+Each worker receives only the allele-count rows needed for its population pair,
+and the parent process restores deterministic pair ordering and performs all
+shared output writes.
+
+Increase workers conservatively because each process may run memory-intensive
+dadi optimization/bootstrap fits. Slurm CPU and memory requests should be sized
+for the chosen worker count.
