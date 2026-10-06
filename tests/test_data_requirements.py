@@ -27,6 +27,7 @@ def _grid_summary():
                     "chromosomes": chromosomes,
                     "segregating_sites": sites,
                     "scenario": "symmetric",
+                    "expected_direction": "symmetric",
                     "success_rate": success,
                     "direction_accuracy": 1.0,
                     "false_directional_positive_rate": fpr,
@@ -35,6 +36,7 @@ def _grid_summary():
                     "chromosomes": chromosomes,
                     "segregating_sites": sites,
                     "scenario": "moderate_a_to_b",
+                    "expected_direction": "A->B",
                     "success_rate": success,
                     "direction_accuracy": accuracy,
                     "false_directional_positive_rate": float("nan"),
@@ -43,6 +45,7 @@ def _grid_summary():
                     "chromosomes": chromosomes,
                     "segregating_sites": sites,
                     "scenario": "moderate_b_to_a",
+                    "expected_direction": "B->A",
                     "success_rate": success,
                     "direction_accuracy": accuracy,
                     "false_directional_positive_rate": float("nan"),
@@ -86,3 +89,23 @@ def test_write_data_requirements_outputs_files(tmp_path):
     assert (tmp_path / "requirements" / "minimum_passing_regimes.csv").exists()
     assert (tmp_path / "requirements" / "data_requirements.json").exists()
     assert (tmp_path / "requirements" / "data_requirements.md").exists()
+
+
+
+def test_missing_symmetric_fpr_does_not_become_directional():
+    frame = _grid_summary()
+    mask = (
+        (frame["chromosomes"] == 10)
+        & (frame["segregating_sites"] == 5000)
+        & (frame["expected_direction"] == "symmetric")
+    )
+    frame.loc[mask, "false_directional_positive_rate"] = float("nan")
+
+    regimes = summarize_data_regimes(frame)
+    row = regimes[
+        (regimes["chromosomes"] == 10)
+        & (regimes["segregating_sites"] == 5000)
+    ].iloc[0]
+
+    assert pd.isna(row["maximum_false_direction_rate"])
+    assert bool(row["passes_targets"]) is False
