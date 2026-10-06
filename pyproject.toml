@@ -9,7 +9,7 @@ description = "Directional inference and geographic visualization of gene flow a
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-authors = [{name = "Pauline Owusu"}]
+authors = [{name = "Pauline Owusu-Ansah"}]
 dependencies = [
   "numpy>=1.26",
   "pandas>=2.1",
