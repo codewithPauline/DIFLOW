@@ -195,3 +195,24 @@ def test_incomplete_calibration_rows_are_not_silently_dropped():
             min_directional_support=0.95,
             min_abs_asymmetry=0.25,
         )
+
+
+
+def test_threshold_selection_rejects_zero_call_solution():
+    scan = pd.DataFrame(
+        [
+            {
+                "min_model_weight": 0.9,
+                "min_directional_support": 0.99,
+                "min_abs_asymmetry": 0.4,
+                "false_directional_positive_rate": 0.0,
+                "directional_sensitivity": 0.0,
+                "direction_accuracy_when_called": float("nan"),
+                "called_fraction": 0.0,
+                "evaluated_rows": 100,
+            }
+        ]
+    )
+
+    with pytest.raises(RuntimeError, match="produced at least one directional call"):
+        select_thresholds(scan, max_false_directional_positive_rate=0.05)
