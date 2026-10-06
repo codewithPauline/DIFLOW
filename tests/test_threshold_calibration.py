@@ -132,3 +132,17 @@ def test_invalid_boolean_text_is_rejected():
             min_directional_support=0.95,
             min_abs_asymmetry=0.25,
         )
+
+
+
+def test_invalid_preferred_direction_is_rejected():
+    evidence = _evidence()
+    evidence.loc[0, "preferred_direction"] = "A=>B"
+
+    with pytest.raises(ValueError, match="preferred_direction"):
+        evaluate_thresholds(
+            evidence,
+            min_model_weight=0.7,
+            min_directional_support=0.95,
+            min_abs_asymmetry=0.25,
+        )
