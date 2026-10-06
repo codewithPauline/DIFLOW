@@ -127,6 +127,14 @@ def false_directional_positive_rate(
         raise ValueError("estimated migration arrays must have identical shapes.")
     if ab.size == 0:
         raise ValueError("estimated migration arrays cannot be empty.")
+    if not np.all(np.isfinite(ab)) or not np.all(np.isfinite(ba)):
+        raise ValueError(
+            "estimated migration arrays must contain only finite values."
+        )
+    if np.any(ab < 0) or np.any(ba < 0):
+        raise ValueError(
+            "estimated migration values must be non-negative."
+        )
     if not 0 <= asymmetry_threshold <= 1:
         raise ValueError("asymmetry_threshold must lie within [0, 1].")
     if true_migration is not None and (not math.isfinite(true_migration) or true_migration < 0):
