@@ -73,24 +73,28 @@ when at least one rate is non-zero.
 
 DIFLOW currently includes:
 
-- VCF + population-map input
+- plain or gzip-compressed VCF + population-map input
 - population allele-count construction
-- projected pairwise jSFS construction
+- projected pairwise jSFS construction with pairwise shared-locus retention inspection
 - explicit forward-time source→recipient migration convention
 - isolation, symmetric-migration, asymmetric-migration, and asymmetric secondary-contact candidate models
 - dadi-backed demographic inference
 - AIC/AICc utilities and Akaike weights
 - multi-start optimization
-- convergence and stability diagnostics
+- convergence, stability, and profile-likelihood diagnostics
 - locus-bootstrap and fixed genomic-window block-bootstrap uncertainty for pairwise jSFS inference
 - directional support probabilities
 - supported / ambiguous / unsupported evidence classification
 - sparse geographic candidate-pair construction
 - directed migration networks
 - source-like / sink-like network summaries
-- directional map rendering
+- directional map rendering with optional projected CRS
 - an end-to-end `diflow infer` command
 - simulation-validation metrics and canonical stress-test scenarios
+- simulation-driven directional threshold calibration
+- msprime/tskit recombination-based linkage validation
+- automatic resolved configuration and SHA-256 run provenance
+- Slurm job-script generation for HPC execution
 
 ## Documentation
 
@@ -232,6 +236,42 @@ explicit opt-in and is not included in `--suite all`.
 
 See [docs/benchmarking.md](docs/benchmarking.md).
 
+## Calibrate the decision rule
+
+Generate complete known-truth classifier evidence:
+
+```bash
+diflow benchmark \
+  --suite decision \
+  --output decision_benchmark/ \
+  --replicates 50 \
+  --decision-bootstrap-replicates 100
+```
+
+Then select evidence thresholds under a false-direction target:
+
+```bash
+diflow calibrate \
+  --evidence decision_benchmark/decision_evidence.csv \
+  --output calibrated_thresholds/ \
+  --max-fpr 0.05
+```
+
+See [docs/calibration.md](docs/calibration.md).
+
+## Profile migration identifiability
+
+For a saved pairwise spectrum:
+
+```bash
+diflow profile \
+  --spectrum results/spectra/POP_A__POP_B.npy \
+  --parameter m_a_to_b \
+  --output profile_A_to_B/
+```
+
+See [docs/profile_likelihood.md](docs/profile_likelihood.md).
+
 ## Directional evidence
 
 A large fitted migration rate is not automatically treated as a supported arrow.
@@ -337,9 +377,9 @@ DIFLOW/
 - [x] Model comparison
 - [x] Locus-bootstrap uncertainty
 - [x] Genomic block-bootstrap uncertainty
-- [ ] Profile-likelihood diagnostics
+- [x] Profile-likelihood diagnostics
 - [x] Unpolarized/folded default for ordinary VCF data
-- [ ] Explicit ancestral-polarization input workflow
+- [x] Explicit ancestral-polarization input workflow
 
 ### Spatial inference and reporting
 - [x] Geographic candidate-pair graphs
@@ -347,21 +387,24 @@ DIFLOW/
 - [x] Source-like / sink-like summaries
 - [x] Directional map rendering
 - [x] End-to-end CLI
-- [ ] Projected publication cartography
-- [ ] Parallel/HPC execution
+- [x] Projected publication cartography
+- [x] Slurm/HPC script generation
+- [ ] Internally benchmarked pair-level parallel execution
 - [ ] Interactive exploration
 
 ### Validation
 - [x] Validation metric framework
 - [x] Canonical benchmark scenario registry
 - [x] Large recovery-grid runner and validation plots
-- [ ] Final simulation calibration and release thresholds
-- [ ] False-positive calibration under symmetry
+- [x] Decision-evidence and threshold-calibration framework
+- [ ] Final empirical simulation calibration and frozen release thresholds
+- [x] False-direction target calibration framework under known symmetry
 - [x] Secondary-contact stress benchmark
 - [x] Range-expansion forward-time stress test
 - [x] Ghost-population forward-time stress test
 - [x] Correlated-block locus-vs-block bootstrap calibration framework
-- [ ] Mechanistic LD/recombination validation and final coverage calibration
+- [x] Mechanistic msprime/tskit LD-recombination validation framework
+- [ ] Final large-scale linkage coverage calibration
 - [ ] Benchmark against established methods
 
 ## Scientific guardrails
@@ -398,6 +441,21 @@ Run tests:
 ```bash
 pytest
 ```
+
+## HPC
+
+Generate a Slurm job script for a complete DIFLOW command:
+
+```bash
+diflow slurm \
+  --run-command "diflow infer --vcf data.vcf.gz --popmap populations.tsv --coords coordinates.csv --projection-chromosomes 8 --output results/" \
+  --script diflow_run.slurm \
+  --cpus 8 \
+  --mem-gb 64 \
+  --hours 72
+```
+
+See [docs/hpc.md](docs/hpc.md).
 
 ## License
 
