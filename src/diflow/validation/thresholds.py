@@ -275,3 +275,74 @@ def write_threshold_calibration(
         index=False,
     )
     return selected, scan
+
+
+
+def load_calibrated_thresholds(path: str | Path) -> CalibratedThresholds:
+    """Load one calibrated threshold record from CSV or JSON output."""
+    source = Path(path)
+    if not source.exists():
+        raise FileNotFoundError(f"threshold file not found: {source}")
+
+    if source.suffix.lower() == ".json":
+        import json
+
+        data = json.loads(source.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and "selected_thresholds" in data:
+            data = data["selected_thresholds"]
+        if not isinstance(data, dict):
+            raise ValueError("threshold JSON must contain one object.")
+        frame = pd.DataFrame([data])
+    else:
+        frame = pd.read_csv(source)
+
+    required = {
+        "min_model_weight",
+        "min_directional_support",
+        "min_abs_asymmetry",
+    }
+    missing = sorted(required - set(frame.columns))
+    if missing:
+        raise ValueError(
+            "threshold file is missing required columns: " + ", ".join(missing)
+        )
+    if len(frame) != 1:
+        raise ValueError("threshold file must contain exactly one selected row.")
+
+    row = frame.iloc[0]
+    mw = float(row["min_model_weight"])
+    ds = float(row["min_directional_support"])
+    aa = float(row["min_abs_asymmetry"])
+    for name, value in (
+        ("min_model_weight", mw),
+        ("min_directional_support", ds),
+        ("min_abs_asymmetry", aa),
+    ):
+        if not np.isfinite(value) or not 0 <= value <= 1:
+            raise ValueError(f"{name} in threshold file must lie within [0, 1].")
+
+    def optional(name: str, default: float = float("nan")) -> float:
+        if name not in frame.columns or pd.isna(row[name]):
+            return default
+        return float(row[name])
+
+    evaluated = (
+        int(row["evaluated_rows"])
+        if "evaluated_rows" in frame.columns and not pd.isna(row["evaluated_rows"])
+        else 0
+    )
+
+    return CalibratedThresholds(
+        min_model_weight=mw,
+        min_directional_support=ds,
+        min_abs_asymmetry=aa,
+        false_directional_positive_rate=optional(
+            "false_directional_positive_rate"
+        ),
+        directional_sensitivity=optional("directional_sensitivity"),
+        direction_accuracy_when_called=optional(
+            "direction_accuracy_when_called"
+        ),
+        called_fraction=optional("called_fraction"),
+        evaluated_rows=evaluated,
+    )
