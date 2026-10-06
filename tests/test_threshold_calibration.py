@@ -3,6 +3,7 @@ import pytest
 
 from diflow.validation.thresholds import (
     calibrate_thresholds,
+    load_calibrated_thresholds,
     evaluate_thresholds,
     select_thresholds,
 )
@@ -61,3 +62,42 @@ def test_calibration_selects_rule_meeting_fpr_target():
     assert len(scan) == 2
     assert selected.false_directional_positive_rate == pytest.approx(0.0)
     assert selected.min_model_weight == pytest.approx(0.9)
+
+
+
+def test_load_calibrated_thresholds_csv(tmp_path):
+    path = tmp_path / "selected_thresholds.csv"
+    pd.DataFrame(
+        [
+            {
+                "min_model_weight": 0.8,
+                "min_directional_support": 0.975,
+                "min_abs_asymmetry": 0.3,
+                "false_directional_positive_rate": 0.04,
+                "directional_sensitivity": 0.82,
+                "direction_accuracy_when_called": 0.96,
+                "called_fraction": 0.71,
+                "evaluated_rows": 500,
+            }
+        ]
+    ).to_csv(path, index=False)
+
+    selected = load_calibrated_thresholds(path)
+    assert selected.min_model_weight == pytest.approx(0.8)
+    assert selected.min_directional_support == pytest.approx(0.975)
+    assert selected.min_abs_asymmetry == pytest.approx(0.3)
+    assert selected.evaluated_rows == 500
+
+
+def test_load_calibrated_thresholds_rejects_multiple_rows(tmp_path):
+    path = tmp_path / "bad.csv"
+    pd.DataFrame(
+        {
+            "min_model_weight": [0.7, 0.8],
+            "min_directional_support": [0.95, 0.975],
+            "min_abs_asymmetry": [0.25, 0.3],
+        }
+    ).to_csv(path, index=False)
+
+    with pytest.raises(ValueError, match="exactly one"):
+        load_calibrated_thresholds(path)
