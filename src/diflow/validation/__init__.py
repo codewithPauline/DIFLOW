@@ -234,3 +234,14 @@ __all__ += [
     "summarize_data_regimes",
     "write_data_requirements",
 ]
+
+
+from .archive import (
+    build_validation_archive_manifest,
+    write_validation_archive_manifest,
+)
+
+__all__ += [
+    "build_validation_archive_manifest",
+    "write_validation_archive_manifest",
+]
