@@ -206,3 +206,41 @@ def test_release_review_rejects_invalid_threshold_metrics(
 
     with pytest.raises(ValueError, match=column):
         review_validation_campaign(root)
+
+
+
+@pytest.mark.parametrize(
+    "column,value,error_match",
+    [
+        ("success_rate", 1.2, "success_rate"),
+        ("success_rate", float("nan"), "success_rate"),
+        ("direction_accuracy", -0.1, "direction_accuracy"),
+        (
+            "false_directional_positive_rate",
+            1.1,
+            "false_directional_positive_rate",
+        ),
+    ],
+)
+def test_release_review_rejects_invalid_recovery_metrics(
+    tmp_path,
+    column,
+    value,
+    error_match,
+):
+    root = tmp_path / "results"
+    _write_valid_campaign(root)
+    recovery_path = root / "recovery_grid" / "recovery_grid_summary.csv"
+    recovery = pd.read_csv(recovery_path)
+
+    if column == "false_directional_positive_rate":
+        recovery.loc[0, column] = value
+    elif column == "direction_accuracy":
+        recovery.loc[1, column] = value
+    else:
+        recovery.loc[1, column] = value
+
+    recovery.to_csv(recovery_path, index=False)
+
+    with pytest.raises(ValueError, match=error_match):
+        review_validation_campaign(root)
