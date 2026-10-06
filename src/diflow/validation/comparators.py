@@ -54,6 +54,23 @@ def validate_comparator_table(
     out = out.dropna(subset=numeric)
     if out.empty:
         raise ValueError(f"{method} comparator table has no usable rows.")
+
+    duplicate_keys = out.duplicated(
+        subset=["scenario", "replicate"],
+        keep=False,
+    )
+    if duplicate_keys.any():
+        examples = (
+            out.loc[duplicate_keys, ["scenario", "replicate"]]
+            .drop_duplicates()
+            .head(5)
+            .to_dict(orient="records")
+        )
+        raise ValueError(
+            f"{method} comparator table contains duplicate "
+            f"(scenario, replicate) rows; examples={examples}."
+        )
+
     if (out[numeric] < 0).any().any():
         raise ValueError("migration truth and estimates must be non-negative.")
     return out
