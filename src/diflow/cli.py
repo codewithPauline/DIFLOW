@@ -13,6 +13,7 @@ from diflow.validation import (
     write_recovery_grid,
     write_stress_benchmark,
     write_linked_bootstrap_calibration,
+    write_mechanistic_linkage_calibration,
 )
 
 
@@ -56,7 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--output", required=True, help="Benchmark output directory.")
     benchmark.add_argument(
         "--suite",
-        choices=("recovery", "stress", "forward", "grid", "linked", "all"),
+        choices=("recovery", "stress", "forward", "grid", "linked", "mechanistic", "all"),
         default="all",
         help="Benchmark suite to run.",
     )
@@ -90,6 +91,15 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=25.0,
         help="Smaller values create stronger within-block dependence.",
+    )
+    benchmark.add_argument("--mechanistic-nref", type=int, default=10000)
+    benchmark.add_argument("--mechanistic-sequence-length", type=int, default=2000000)
+    benchmark.add_argument("--mechanistic-recombination-rate", type=float, default=1e-8)
+    benchmark.add_argument("--mechanistic-mutation-rate", type=float, default=1e-8)
+    benchmark.add_argument(
+        "--mechanistic-block-sizes",
+        default="50000,100000,250000",
+        help="Comma-separated block sizes in bp for msprime linkage calibration.",
     )
 
     infer = subparsers.add_parser(
@@ -231,6 +241,24 @@ def main(argv=None) -> int:
             parser.error("--linked-block-bp must be at least --snps-per-block.")
         if args.linkage_concentration <= 0:
             parser.error("--linkage-concentration must be positive.")
+        if args.mechanistic_nref < 2:
+            parser.error("--mechanistic-nref must be at least 2.")
+        if args.mechanistic_sequence_length < 1000:
+            parser.error("--mechanistic-sequence-length must be at least 1000.")
+        if args.mechanistic_recombination_rate < 0:
+            parser.error("--mechanistic-recombination-rate must be non-negative.")
+        if args.mechanistic_mutation_rate <= 0:
+            parser.error("--mechanistic-mutation-rate must be positive.")
+        try:
+            mechanistic_block_sizes = tuple(
+                int(value.strip())
+                for value in args.mechanistic_block_sizes.split(",")
+                if value.strip()
+            )
+        except ValueError:
+            parser.error("--mechanistic-block-sizes must be comma-separated integers.")
+        if not mechanistic_block_sizes or any(value < 1 for value in mechanistic_block_sizes):
+            parser.error("--mechanistic-block-sizes must contain positive integers.")
 
         common = dict(
             replicates=args.replicates,
@@ -320,6 +348,27 @@ def main(argv=None) -> int:
                 seed=args.seed,
             )
             print("DIFLOW linked-marker bootstrap calibration")
+            print(f"Replicate rows: {len(raw)}")
+            print(f"Summary rows: {len(summary)}")
+            print(f"Validation figures: {len(figures)}")
+            print("")
+
+        if args.suite == "mechanistic":
+            raw, summary, figures = write_mechanistic_linkage_calibration(
+                output_dir=args.output,
+                replicates=args.replicates,
+                chromosomes_per_population=args.chromosomes,
+                nref=args.mechanistic_nref,
+                sequence_length=args.mechanistic_sequence_length,
+                recombination_rate=args.mechanistic_recombination_rate,
+                mutation_rate=args.mechanistic_mutation_rate,
+                block_sizes_bp=mechanistic_block_sizes,
+                bootstrap_replicates=args.linked_bootstrap_replicates,
+                bootstrap_starts=max(1, min(args.starts, 5)),
+                maxiter=args.maxiter,
+                seed=args.seed,
+            )
+            print("DIFLOW mechanistic linkage calibration")
             print(f"Replicate rows: {len(raw)}")
             print(f"Summary rows: {len(summary)}")
             print(f"Validation figures: {len(figures)}")
