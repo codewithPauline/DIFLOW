@@ -26,6 +26,8 @@ from diflow.validation import (
     write_standardized_diflow_benchmark,
     ReleaseCriteria,
     review_validation_campaign,
+    DataRequirementTargets,
+    write_data_requirements,
 )
 
 
@@ -197,6 +199,16 @@ def build_parser() -> argparse.ArgumentParser:
     campaign.add_argument("--hours", type=int, default=72)
     campaign.add_argument("--seed", type=int, default=42)
     campaign.add_argument("--email", default=None)
+
+    data_requirements = subparsers.add_parser(
+        "data-requirements",
+        help="Derive empirical minimum-data guidance from a recovery-grid summary.",
+    )
+    data_requirements.add_argument("--grid-summary", required=True)
+    data_requirements.add_argument("--output", required=True)
+    data_requirements.add_argument("--min-direction-accuracy", type=float, default=0.90)
+    data_requirements.add_argument("--max-false-direction-rate", type=float, default=0.05)
+    data_requirements.add_argument("--min-success-rate", type=float, default=0.95)
 
     release_review = subparsers.add_parser(
         "release-review",
@@ -704,6 +716,24 @@ def main(argv=None) -> int:
         )
         print(f"DIFLOW validation campaign: {manifest}")
         print(f"Submit jobs with: bash {Path(args.output) / 'submit_all.sh'}")
+        return 0
+
+    if args.command == "data-requirements":
+        targets = DataRequirementTargets(
+            min_direction_accuracy=args.min_direction_accuracy,
+            max_false_direction_rate=args.max_false_direction_rate,
+            min_success_rate=args.min_success_rate,
+        )
+        _, minima, recommendation = write_data_requirements(
+            recovery_grid_summary_csv=args.grid_summary,
+            output_dir=args.output,
+            targets=targets,
+        )
+        print("DIFLOW empirical data requirements")
+        print(f"Status: {recommendation['status']}")
+        print(f"Passing regimes: {recommendation['passing_regimes']}")
+        print(f"Pareto-minimum regimes: {len(minima)}")
+        print(f"Results: {args.output}")
         return 0
 
     if args.command == "release-review":
