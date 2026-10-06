@@ -59,6 +59,56 @@ def validate_comparator_table(
 
 
 
+
+
+def standardize_diflow_benchmark(
+    frame: pd.DataFrame,
+    *,
+    estimand: str = "dadi_scaled_migration",
+) -> pd.DataFrame:
+    """Convert DIFLOW recovery-style outputs to the comparator schema."""
+    aliases = {
+        "true_m_a_to_b": "truth_m_a_to_b",
+        "true_m_b_to_a": "truth_m_b_to_a",
+    }
+    out = frame.rename(columns=aliases).copy()
+    required = {
+        "scenario",
+        "replicate",
+        "truth_m_a_to_b",
+        "truth_m_b_to_a",
+        "estimated_m_a_to_b",
+        "estimated_m_b_to_a",
+    }
+    missing = sorted(required - set(out.columns))
+    if missing:
+        raise ValueError(
+            "DIFLOW benchmark table cannot be standardized; missing: "
+            + ", ".join(missing)
+        )
+    out = out.loc[:, list(required)].copy()
+    out["estimand"] = str(estimand)
+    return out
+
+
+def write_standardized_diflow_benchmark(
+    input_csv: str | Path,
+    output_csv: str | Path,
+    *,
+    estimand: str = "dadi_scaled_migration",
+) -> Path:
+    """Write a DIFLOW benchmark table in the external-comparison schema."""
+    frame = pd.read_csv(input_csv)
+    standardized = standardize_diflow_benchmark(
+        frame,
+        estimand=estimand,
+    )
+    output = Path(output_csv)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    standardized.to_csv(output, index=False)
+    return output
+
+
 def validate_matched_comparison(
     results: pd.DataFrame,
     *,
