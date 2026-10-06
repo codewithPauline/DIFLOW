@@ -3,6 +3,7 @@ import pytest
 
 from diflow.validation.comparators import (
     summarize_method_comparison,
+    summarize_direction_only_comparison,
     standardize_diflow_benchmark,
     validate_matched_comparison,
     validate_comparator_table,
@@ -87,3 +88,20 @@ def test_standardize_diflow_benchmark_maps_truth_columns():
     assert "truth_m_a_to_b" in out.columns
     assert "truth_m_b_to_a" in out.columns
     assert out.iloc[0]["estimand"] == "dadi_scaled_migration"
+
+
+
+def test_direction_only_summary_allows_different_estimands():
+    a = validate_comparator_table(_table(), method="DIFLOW")
+    b = validate_comparator_table(_table(), method="Other")
+    a["estimand"] = "dadi_scaled_migration"
+    b["estimand"] = "effective_lineage_migration"
+    combined = pd.concat([a, b], ignore_index=True)
+
+    # Direction-only comparison intentionally ignores scale incompatibility.
+    stripped = combined.drop(columns=["estimand"])
+    matched = validate_matched_comparison(stripped)
+    summary = summarize_direction_only_comparison(matched)
+    assert set(summary["method"]) == {"DIFLOW", "Other"}
+    assert "bias_m_a_to_b" not in summary.columns
+    assert "direction_accuracy" in summary.columns
