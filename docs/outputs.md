@@ -61,3 +61,19 @@ Records important settings used for the run, supporting reproducibility.
 5. inspect confidence intervals and directional support,
 6. inspect evidence status,
 7. then interpret the network and map.
+
+## Bootstrap provenance
+
+When uncertainty is enabled, pairwise results record whether resampling used
+independent loci or fixed genomic blocks.
+
+Relevant fields include:
+
+- `bootstrap_resampling_unit`
+- `bootstrap_blocks_used`
+- `bootstrap_loci_used`
+- `bootstrap_successful`
+- `bootstrap_attempted`
+
+This provenance matters when interpreting confidence intervals from linked
+marker datasets.
