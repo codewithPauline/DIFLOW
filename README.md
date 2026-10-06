@@ -548,6 +548,14 @@ diflow archive-validation --results validation_campaign/results/
 DIFLOW writes a file inventory and SHA-256 checksum manifest for reproducible
 archival.
 
+## Real-data case study
+
+A validated release also requires at least one real-data workflow demonstration.
+The case study is for usability and interpretation—not proof of estimator
+accuracy.
+
+See [docs/case_study_protocol.md](docs/case_study_protocol.md).
+
 ## Release readiness
 
 The software infrastructure is now broad, but final scientific validation still
