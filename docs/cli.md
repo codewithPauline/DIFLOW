@@ -1,6 +1,6 @@
 # Command-line reference
 
-DIFLOW currently provides nine main commands:
+DIFLOW currently provides eleven main commands:
 
 - diflow inspect
 - diflow infer
@@ -11,6 +11,8 @@ DIFLOW currently provides nine main commands:
 - diflow report
 - diflow compare
 - diflow campaign
+- diflow benchmark-export
+- diflow release-review
 
 ## diflow inspect
 
@@ -99,7 +101,7 @@ See [outputs.md](outputs.md) for the full output reference.
 
 ## Benchmark suites
 
-DIFLOW provides seven benchmark modes:
+DIFLOW provides eight benchmark modes:
 
     diflow benchmark --suite recovery --output recovery/
     diflow benchmark --suite stress --output stress/
@@ -107,6 +109,7 @@ DIFLOW provides seven benchmark modes:
     diflow benchmark --suite grid --output grid/
     diflow benchmark --suite linked --output linked/
     diflow benchmark --suite mechanistic --output mechanistic/
+    diflow benchmark --suite mechanistic-grid --output mechanistic_grid/
     diflow benchmark --suite decision --output decision/
 
 `--suite all` runs recovery, stress, and forward-time stress suites.
@@ -214,3 +217,16 @@ Evaluate completed empirical validation outputs against explicit release
 criteria:
 
     diflow release-review --results validation_campaign/results/
+
+
+## Mechanistic linkage grid
+
+The release-grade linkage study spans multiple recombination and mutation-rate
+regimes:
+
+    diflow benchmark \
+      --suite mechanistic-grid \
+      --output mechanistic_grid/ \
+      --mechanistic-grid-workers 8
+
+The worker count parallelizes independent grid cells using isolated processes.
