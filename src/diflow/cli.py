@@ -18,6 +18,7 @@ from diflow.validation import (
     write_stress_benchmark,
     write_linked_bootstrap_calibration,
     write_mechanistic_linkage_calibration,
+    write_mechanistic_linkage_grid,
     write_decision_evidence_benchmark,
     write_threshold_calibration,
     load_calibrated_thresholds,
@@ -68,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--output", required=True, help="Benchmark output directory.")
     benchmark.add_argument(
         "--suite",
-        choices=("recovery", "stress", "forward", "grid", "linked", "mechanistic", "decision", "all"),
+        choices=("recovery", "stress", "forward", "grid", "linked", "mechanistic", "mechanistic-grid", "decision", "all"),
         default="all",
         help="Benchmark suite to run.",
     )
@@ -561,6 +562,24 @@ def main(argv=None) -> int:
                 seed=args.seed,
             )
             print("DIFLOW mechanistic linkage calibration")
+            print(f"Replicate rows: {len(raw)}")
+            print(f"Summary rows: {len(summary)}")
+            print(f"Validation figures: {len(figures)}")
+            print("")
+
+        if args.suite == "mechanistic-grid":
+            raw, summary, figures = write_mechanistic_linkage_grid(
+                output_dir=args.output,
+                replicates=args.replicates,
+                chromosomes_per_population=args.chromosomes,
+                nref=args.mechanistic_nref,
+                block_sizes_bp=mechanistic_block_sizes,
+                bootstrap_replicates=args.linked_bootstrap_replicates,
+                bootstrap_starts=max(1, min(args.starts, 5)),
+                maxiter=args.maxiter,
+                seed=args.seed,
+            )
+            print("DIFLOW mechanistic linkage grid")
             print(f"Replicate rows: {len(raw)}")
             print(f"Summary rows: {len(summary)}")
             print(f"Validation figures: {len(figures)}")
