@@ -184,3 +184,33 @@ Generate a reproducible multi-job Slurm campaign for release-grade validation:
       --cpus 8 \
       --mem-gb 64 \
       --hours 72
+
+
+## Calibrated thresholds
+
+Apply a calibration result directly to inference:
+
+    diflow infer \
+      --vcf data.vcf.gz \
+      --popmap populations.tsv \
+      --coords coordinates.csv \
+      --projection-chromosomes 8 \
+      --thresholds-file calibration/selected_thresholds.csv \
+      --output results/
+
+Explicit threshold flags override values loaded from the file.
+
+## Comparator export
+
+Convert DIFLOW recovery output into the standardized method-comparison schema:
+
+    diflow benchmark-export \
+      --input recovery_grid/recovery_grid_replicates.csv \
+      --output diflow_standardized.csv
+
+## Release review
+
+Evaluate completed empirical validation outputs against explicit release
+criteria:
+
+    diflow release-review --results validation_campaign/results/
