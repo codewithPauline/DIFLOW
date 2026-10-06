@@ -32,6 +32,7 @@ def _validate_evidence_table(frame: pd.DataFrame) -> pd.DataFrame:
         "directional_support",
         "asymmetry_index",
         "optimizer_stable",
+        "interval_separated",
     }
     if not required.issubset(frame.columns):
         missing = sorted(required - set(frame.columns))
@@ -55,6 +56,7 @@ def _validate_evidence_table(frame: pd.DataFrame) -> pd.DataFrame:
         ]
     )
     clean["optimizer_stable"] = clean["optimizer_stable"].astype(bool)
+    clean["interval_separated"] = clean["interval_separated"].astype(bool)
 
     probability_columns = ("asymmetric_model_weight", "directional_support")
     for column in probability_columns:
@@ -86,6 +88,7 @@ def evaluate_thresholds(
 
     called = (
         frame["optimizer_stable"]
+        & frame["interval_separated"]
         & (frame["asymmetric_model_weight"] >= min_model_weight)
         & (frame["directional_support"] >= min_directional_support)
         & (frame["asymmetry_index"].abs() >= min_abs_asymmetry)
