@@ -199,6 +199,7 @@ def summarize_recovery(
     """Summarize recovery accuracy by known-truth scenario."""
     required = {
         "scenario",
+        "expected_direction",
         "success",
         "true_m_a_to_b",
         "true_m_b_to_a",
@@ -211,8 +212,20 @@ def summarize_recovery(
     summaries: list[dict] = []
     for scenario, group in results.groupby("scenario", sort=False):
         successful = group[group["success"].astype(bool)].copy()
+        directions = sorted(
+            {
+                str(value)
+                for value in group["expected_direction"].dropna()
+            }
+        )
+        if len(directions) != 1:
+            raise ValueError(
+                f"scenario {scenario!r} must have exactly one expected_direction."
+            )
+
         row = {
             "scenario": scenario,
+            "expected_direction": directions[0],
             "attempted_replicates": len(group),
             "successful_replicates": len(successful),
             "success_rate": float(len(successful) / len(group)),
