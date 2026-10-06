@@ -14,6 +14,7 @@ from .candidate_models import (
 )
 from .comparison import ModelScore, rank_models
 from .dadi_backend import _require_dadi
+from .spectrum import prepare_observed_spectrum
 
 
 @dataclass(frozen=True)
@@ -73,6 +74,7 @@ def _fit_candidate(
     initial: list[float] | tuple[float, ...] | None = None,
     grid_points: tuple[int, int, int] | None = None,
     maxiter: int = 100,
+    polarized: bool = False,
 ) -> CandidateFit:
     dadi = _require_dadi()
     data_array = np.asarray(observed_spectrum, dtype=float)
@@ -84,7 +86,7 @@ def _fit_candidate(
 
     spec = MODEL_SPECS[model_name]
     ns = (data_array.shape[0] - 1, data_array.shape[1] - 1)
-    data = dadi.Spectrum(data_array)
+    data = prepare_observed_spectrum(data_array, polarized=polarized)
 
     if grid_points is None:
         largest = max(ns)
@@ -151,6 +153,7 @@ def compare_candidate_models(
     grid_points: tuple[int, int, int] | None = None,
     maxiter: int = 100,
     use_aicc: bool = True,
+    polarized: bool = False,
 ):
     """Fit candidate models and rank them by AIC or AICc.
 
@@ -173,6 +176,7 @@ def compare_candidate_models(
             name,
             grid_points=grid_points,
             maxiter=maxiter,
+            polarized=polarized,
         )
         for name in models
     ]
