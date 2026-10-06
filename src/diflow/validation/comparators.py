@@ -238,12 +238,69 @@ def summarize_method_comparison(
     return pd.DataFrame(rows)
 
 
+
+
+def summarize_direction_only_comparison(
+    results: pd.DataFrame,
+    *,
+    asymmetry_threshold: float = 0.25,
+) -> pd.DataFrame:
+    """Compare directional recovery without assuming magnitude-scale equivalence.
+
+    This mode is appropriate when methods estimate different migration
+    quantities but still provide two directional scores/rates whose ordering can
+    be compared against known truth.
+    """
+    required = _REQUIRED | {"method"}
+    if not required.issubset(results.columns):
+        raise ValueError("comparison results are missing required columns.")
+    if not 0 <= asymmetry_threshold <= 1:
+        raise ValueError("asymmetry_threshold must lie within [0, 1].")
+
+    rows = []
+    for (method, scenario), group in results.groupby(
+        ["method", "scenario"],
+        sort=False,
+    ):
+        true_ab = group["truth_m_a_to_b"].to_numpy(float)
+        true_ba = group["truth_m_b_to_a"].to_numpy(float)
+        est_ab = group["estimated_m_a_to_b"].to_numpy(float)
+        est_ba = group["estimated_m_b_to_a"].to_numpy(float)
+        symmetric = np.allclose(true_ab, true_ba)
+
+        rows.append(
+            {
+                "method": method,
+                "scenario": scenario,
+                "replicates": len(group),
+                "direction_accuracy": direction_accuracy(
+                    true_ab,
+                    true_ba,
+                    est_ab,
+                    est_ba,
+                ),
+                "false_directional_positive_rate": (
+                    false_directional_positive_rate(
+                        est_ab,
+                        est_ba,
+                        true_migration=float(true_ab[0]),
+                        asymmetry_threshold=asymmetry_threshold,
+                    )
+                    if symmetric
+                    else np.nan
+                ),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def compare_method_files(
     methods: dict[str, str | Path],
     *,
     output_dir: str | Path,
     asymmetry_threshold: float = 0.25,
     require_complete_match: bool = True,
+    direction_only: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame, list[Path]]:
     """Read standardized method CSVs and write side-by-side benchmark outputs."""
     if len(methods) < 2:
@@ -255,14 +312,29 @@ def compare_method_files(
         frames.append(validate_comparator_table(frame, method=method))
 
     combined = pd.concat(frames, ignore_index=True)
-    combined = validate_matched_comparison(
-        combined,
-        require_complete_match=require_complete_match,
-    )
-    summary = summarize_method_comparison(
-        combined,
-        asymmetry_threshold=asymmetry_threshold,
-    )
+    if direction_only:
+        # Truth and replicate keys must still match, but estimands may differ
+        # because only directional ordering is compared.
+        estimand = combined.pop("estimand") if "estimand" in combined.columns else None
+        combined = validate_matched_comparison(
+            combined,
+            require_complete_match=require_complete_match,
+        )
+        if estimand is not None:
+            combined["estimand"] = estimand.to_numpy()
+        summary = summarize_direction_only_comparison(
+            combined,
+            asymmetry_threshold=asymmetry_threshold,
+        )
+    else:
+        combined = validate_matched_comparison(
+            combined,
+            require_complete_match=require_complete_match,
+        )
+        summary = summarize_method_comparison(
+            combined,
+            asymmetry_threshold=asymmetry_threshold,
+        )
 
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
