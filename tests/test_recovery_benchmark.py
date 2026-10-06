@@ -160,3 +160,34 @@ def test_recovery_summary_rejects_invalid_truth_migration(
 
     with pytest.raises(ValueError, match=error_match):
         summarize_recovery(results)
+
+
+
+@pytest.mark.parametrize(
+    "column,value,error_match",
+    [
+        ("estimated_m_a_to_b", float("nan"), "estimated_m_a_to_b"),
+        ("estimated_m_b_to_a", float("inf"), "estimated_m_b_to_a"),
+        ("estimated_m_a_to_b", -0.1, "estimated_m_a_to_b"),
+    ],
+)
+def test_recovery_summary_rejects_invalid_successful_estimate(
+    column,
+    value,
+    error_match,
+):
+    results = pd.DataFrame(
+        {
+            "scenario": ["directional"],
+            "success": [True],
+            "true_m_a_to_b": [1.0],
+            "true_m_b_to_a": [0.25],
+            "estimated_m_a_to_b": [0.9],
+            "estimated_m_b_to_a": [0.3],
+            "optimizer_stable": [True],
+        }
+    )
+    results.loc[0, column] = value
+
+    with pytest.raises(ValueError, match=error_match):
+        summarize_recovery(results)
