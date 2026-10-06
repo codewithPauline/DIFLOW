@@ -754,6 +754,7 @@ def main(argv=None) -> int:
             min_model_weight=thresholds["min_model_weight"],
             min_directional_support=thresholds["min_directional_support"],
             min_abs_asymmetry=thresholds["min_abs_asymmetry"],
+            thresholds_source=args.thresholds_file,
             polarized=args.polarized,
             map_crs=args.map_crs,
             workers=args.workers,
