@@ -140,3 +140,11 @@ def test_method_comparison_writes_provenance(tmp_path):
     assert metadata["estimands"] == ["dadi_scaled_migration"]
     assert metadata["method_versions"]["DIFLOW"] == ["0.0.1"]
     assert metadata["method_versions"]["Other"] == ["1.2.3"]
+
+
+
+def test_comparator_rejects_duplicate_scenario_replicate_rows():
+    duplicated = pd.concat([_table(), _table().iloc[[0]]], ignore_index=True)
+
+    with pytest.raises(ValueError, match="duplicate .*scenario, replicate"):
+        validate_comparator_table(duplicated, method="DIFLOW")
