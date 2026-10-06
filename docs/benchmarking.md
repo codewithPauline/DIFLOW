@@ -217,3 +217,42 @@ Those scenarios require explicit generating models beyond the current
 two-population candidate-model family. DIFLOW will not approximate them with an
 unrelated model merely to check a roadmap box. They will be added when the
 simulation model represents the intended biology directly.
+
+
+## Independent forward-time stress benchmark
+
+DIFLOW also includes a stress generator that does **not** use dadi to generate
+the data. Instead, it simulates explicit Wright-Fisher allele-frequency
+histories and only uses dadi at the fitting stage.
+
+Run it with:
+
+    diflow benchmark \
+      --suite forward \
+      --output forward_stress_results/ \
+      --replicates 10 \
+      --chromosomes 20 \
+      --sites 5000 \
+      --starts 10
+
+The current scenarios are:
+
+- serial-founder range expansion with no ongoing A/B migration
+- ghost-population introgression into B with no direct A/B migration
+- a recent bottleneck in B with no migration
+- uneven chromosome sampling under no migration
+
+These scenarios are intentionally out-of-model. Their purpose is to measure
+whether histories not represented by the fitted candidate set can induce a
+false asymmetric-migration signal.
+
+The forward-stress summary reports:
+
+- fitting success rate
+- false directional-signal rate
+- frequency that asymmetric continuous migration is selected
+- frequency that asymmetric secondary contact is selected
+
+This layer is especially important because a method that performs well only
+when the generating and fitted models are identical has not demonstrated
+robustness to realistic demographic misspecification.
