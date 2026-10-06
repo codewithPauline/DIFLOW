@@ -199,7 +199,6 @@ def summarize_recovery(
     """Summarize recovery accuracy by known-truth scenario."""
     required = {
         "scenario",
-        "expected_direction",
         "success",
         "true_m_a_to_b",
         "true_m_b_to_a",
@@ -212,20 +211,36 @@ def summarize_recovery(
     summaries: list[dict] = []
     for scenario, group in results.groupby("scenario", sort=False):
         successful = group[group["success"].astype(bool)].copy()
-        directions = sorted(
-            {
+        truth_ab_all = group["true_m_a_to_b"].to_numpy(float)
+        truth_ba_all = group["true_m_b_to_a"].to_numpy(float)
+        inferred_directions = {
+            (
+                "symmetric"
+                if np.isclose(m_ab, m_ba)
+                else ("A->B" if m_ab > m_ba else "B->A")
+            )
+            for m_ab, m_ba in zip(truth_ab_all, truth_ba_all)
+        }
+        if len(inferred_directions) != 1:
+            raise ValueError(
+                f"scenario {scenario!r} contains inconsistent migration truth."
+            )
+        inferred_direction = next(iter(inferred_directions))
+
+        if "expected_direction" in group.columns:
+            supplied = {
                 str(value)
                 for value in group["expected_direction"].dropna()
             }
-        )
-        if len(directions) != 1:
-            raise ValueError(
-                f"scenario {scenario!r} must have exactly one expected_direction."
-            )
+            if supplied and supplied != {inferred_direction}:
+                raise ValueError(
+                    f"scenario {scenario!r} expected_direction disagrees with "
+                    "the numerical migration truth."
+                )
 
         row = {
             "scenario": scenario,
-            "expected_direction": directions[0],
+            "expected_direction": inferred_direction,
             "attempted_replicates": len(group),
             "successful_replicates": len(successful),
             "success_rate": float(len(successful) / len(group)),
