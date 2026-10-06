@@ -7,6 +7,7 @@ from pathlib import Path
 
 from diflow.inspection import PRESETS, inspect_dataset
 from diflow.hpc import write_slurm_script
+from diflow.report import write_html_report
 from diflow.demography import write_profile_likelihood
 from diflow.pipeline import run_infer_pipeline
 from diflow.validation import (
@@ -128,6 +129,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.05,
         help="Maximum tolerated false directional-positive rate.",
     )
+
+    report = subparsers.add_parser(
+        "report",
+        help="Create a searchable self-contained HTML report from DIFLOW results.",
+    )
+    report.add_argument("--results", required=True)
+    report.add_argument("--output", default=None)
 
     slurm = subparsers.add_parser(
         "slurm",
@@ -520,6 +528,14 @@ def main(argv=None) -> int:
             f"{selected.directional_sensitivity:.3f}"
         )
         print(f"Results: {args.output}")
+        return 0
+
+    if args.command == "report":
+        path = write_html_report(
+            args.results,
+            output_path=args.output,
+        )
+        print(f"DIFLOW HTML report: {path}")
         return 0
 
     if args.command == "slurm":
