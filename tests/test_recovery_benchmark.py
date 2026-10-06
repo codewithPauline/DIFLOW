@@ -88,3 +88,21 @@ def test_summary_reports_false_positive_rate_under_symmetry():
     )
     summary = summarize_recovery(results, asymmetry_threshold=0.25)
     assert summary.iloc[0]["false_directional_positive_rate"] == pytest.approx(0.25)
+
+
+
+def test_recovery_summary_rejects_mislabeled_direction():
+    results = pd.DataFrame(
+        {
+            "scenario": ["bad", "bad"],
+            "expected_direction": ["B->A", "B->A"],
+            "success": [True, True],
+            "true_m_a_to_b": [1.0, 1.0],
+            "true_m_b_to_a": [0.25, 0.25],
+            "estimated_m_a_to_b": [0.9, 1.1],
+            "estimated_m_b_to_a": [0.3, 0.2],
+            "optimizer_stable": [True, True],
+        }
+    )
+    with pytest.raises(ValueError, match="disagrees"):
+        summarize_recovery(results)
