@@ -88,6 +88,8 @@ def test_standardize_diflow_benchmark_maps_truth_columns():
     out = standardize_diflow_benchmark(frame)
     assert "truth_m_a_to_b" in out.columns
     assert "truth_m_b_to_a" in out.columns
+    assert "method_version" in out.columns
+    assert str(out.iloc[0]["method_version"]).strip()
     assert out.iloc[0]["estimand"] == "dadi_scaled_migration"
 
 
@@ -112,8 +114,14 @@ def test_direction_only_summary_allows_different_estimands():
 def test_method_comparison_writes_provenance(tmp_path):
     a_path = tmp_path / "a.csv"
     b_path = tmp_path / "b.csv"
-    _table().assign(estimand="dadi_scaled_migration").to_csv(a_path, index=False)
-    _table().assign(estimand="dadi_scaled_migration").to_csv(b_path, index=False)
+    _table().assign(
+        estimand="dadi_scaled_migration",
+        method_version="0.0.1",
+    ).to_csv(a_path, index=False)
+    _table().assign(
+        estimand="dadi_scaled_migration",
+        method_version="1.2.3",
+    ).to_csv(b_path, index=False)
 
     compare_method_files(
         {"DIFLOW": a_path, "Other": b_path},
@@ -130,3 +138,5 @@ def test_method_comparison_writes_provenance(tmp_path):
     assert metadata["require_complete_match"] is True
     assert metadata["methods"] == ["DIFLOW", "Other"]
     assert metadata["estimands"] == ["dadi_scaled_migration"]
+    assert metadata["method_versions"]["DIFLOW"] == ["0.0.1"]
+    assert metadata["method_versions"]["Other"] == ["1.2.3"]
