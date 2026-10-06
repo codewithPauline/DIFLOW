@@ -332,7 +332,7 @@ def review_validation_campaign(
             root / "threshold_calibration" / "selected_thresholds.csv"
         ),
         "mechanistic_linkage": (
-            root / "mechanistic_linkage" / "mechanistic_linkage_summary.csv"
+            root / "mechanistic_linkage" / "mechanistic_grid_summary.csv"
         ),
         "external_comparison": (
             root / "external_comparison" / "method_comparison_summary.csv"
@@ -346,6 +346,10 @@ def review_validation_campaign(
     }
 
     for section, path in expected.items():
+        if section == "mechanistic_linkage" and not path.exists():
+            legacy = root / "mechanistic_linkage" / "mechanistic_linkage_summary.csv"
+            if legacy.exists():
+                path = legacy
         if not path.exists():
             checks.append(
                 _metric_check(
