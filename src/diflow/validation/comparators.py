@@ -72,21 +72,22 @@ def standardize_diflow_benchmark(
         "true_m_b_to_a": "truth_m_b_to_a",
     }
     out = frame.rename(columns=aliases).copy()
-    required = {
+    ordered = [
         "scenario",
         "replicate",
         "truth_m_a_to_b",
         "truth_m_b_to_a",
         "estimated_m_a_to_b",
         "estimated_m_b_to_a",
-    }
+    ]
+    required = set(ordered)
     missing = sorted(required - set(out.columns))
     if missing:
         raise ValueError(
             "DIFLOW benchmark table cannot be standardized; missing: "
             + ", ".join(missing)
         )
-    out = out.loc[:, list(required)].copy()
+    out = out.loc[:, ordered].copy()
     out["estimand"] = str(estimand)
     return out
 
