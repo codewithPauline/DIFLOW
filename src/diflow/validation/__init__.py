@@ -171,6 +171,7 @@ __all__ += [
 
 from .comparators import (
     compare_method_files,
+    summarize_direction_only_comparison,
     standardize_diflow_benchmark,
     write_standardized_diflow_benchmark,
     validate_matched_comparison,
@@ -180,6 +181,7 @@ from .comparators import (
 
 __all__ += [
     "compare_method_files",
+    "summarize_direction_only_comparison",
     "standardize_diflow_benchmark",
     "write_standardized_diflow_benchmark",
     "validate_matched_comparison",
