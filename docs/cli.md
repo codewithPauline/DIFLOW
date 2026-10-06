@@ -1,6 +1,6 @@
 # Command-line reference
 
-DIFLOW currently provides six main commands:
+DIFLOW currently provides eight main commands:
 
 - diflow inspect
 - diflow infer
@@ -8,6 +8,8 @@ DIFLOW currently provides six main commands:
 - diflow calibrate
 - diflow profile
 - diflow slurm
+- diflow report
+- diflow compare
 
 ## diflow inspect
 
@@ -152,3 +154,19 @@ Generate a Slurm script for an existing DIFLOW command:
       --cpus 8 \
       --mem-gb 64 \
       --hours 72
+
+
+## diflow report
+
+Create a self-contained searchable HTML report:
+
+    diflow report --results results/
+
+## diflow compare
+
+Compare standardized simulation outputs from multiple methods:
+
+    diflow compare \
+      --method DIFLOW=diflow.csv \
+      --method OTHER=other.csv \
+      --output comparison/
