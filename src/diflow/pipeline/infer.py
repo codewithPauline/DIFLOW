@@ -83,6 +83,9 @@ def run_infer_pipeline(
     bootstrap_replicates: int = 0,
     bootstrap_starts: int = 5,
     bootstrap_block_bp: int | None = None,
+    min_model_weight: float = 0.70,
+    min_directional_support: float = 0.95,
+    min_abs_asymmetry: float = 0.25,
     prepare_only: bool = False,
     seed: int | None = None,
 ) -> PipelineResult:
@@ -96,6 +99,13 @@ def run_infer_pipeline(
         raise ValueError("bootstrap_starts must be at least 1.")
     if bootstrap_block_bp is not None and bootstrap_block_bp < 1:
         raise ValueError("bootstrap_block_bp must be a positive integer.")
+    for name, value in (
+        ("min_model_weight", min_model_weight),
+        ("min_directional_support", min_directional_support),
+        ("min_abs_asymmetry", min_abs_asymmetry),
+    ):
+        if not 0 <= value <= 1:
+            raise ValueError(f"{name} must lie within [0, 1].")
 
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -202,6 +212,8 @@ def run_infer_pipeline(
             m_b_to_a=m_b_to_a,
             asymmetric_weight=asym_weight,
             stable=asym_fit.stable,
+            min_model_weight=min_model_weight,
+            min_abs_asymmetry=min_abs_asymmetry,
         )
 
         row = {
@@ -246,6 +258,9 @@ def run_infer_pipeline(
             )
             decision = classify_direction(
                 evidence,
+                min_model_weight=min_model_weight,
+                min_directional_support=min_directional_support,
+                min_abs_asymmetry=min_abs_asymmetry,
                 require_interval_separation=True,
             )
 
@@ -303,6 +318,9 @@ def run_infer_pipeline(
                     "locus" if bootstrap_block_bp is None
                     else f"{bootstrap_block_bp}-bp genomic block"
                 ),
+                "min_model_weight": min_model_weight,
+                "min_directional_support": min_directional_support,
+                "min_abs_asymmetry": min_abs_asymmetry,
                 "prepare_only": prepare_only,
                 "direction_status_note": (
                     "supported/ambiguous/unsupported uses bootstrap uncertainty "
