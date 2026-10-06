@@ -92,6 +92,29 @@ DIFLOW currently includes:
 - an end-to-end `diflow infer` command
 - simulation-validation metrics and canonical stress-test scenarios
 
+## Documentation
+
+New to DIFLOW? Start with the [Getting Started guide](docs/getting_started.md).
+
+Key user documentation:
+
+- [Input Files](docs/input_files.md) — prepare the VCF, population map, and coordinates.
+- [Inspection Workflow](docs/inspection_workflow.md) — understand projection and graph recommendations.
+- [Command-line Reference](docs/cli.md) — use `diflow inspect` and `diflow infer`.
+- [Understanding Outputs](docs/outputs.md) — interpret result tables, network summaries, and maps.
+- [Full Documentation Index](docs/README.md) — statistical methods, uncertainty, mapping, and validation.
+
+Typical first step:
+
+```bash
+diflow inspect \
+  --vcf data.vcf \
+  --popmap populations.tsv \
+  --coords coordinates.csv
+```
+
+DIFLOW will summarize the dataset, show projection-retention tradeoffs, compare candidate geographic graphs, and print a ready-to-copy inference command.
+
 ## Command-line workflow
 
 Prepare genomic inputs and spectra without fitting demographic models:
