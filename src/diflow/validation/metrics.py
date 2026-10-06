@@ -53,6 +53,14 @@ def interval_coverage(truth, lower, upper) -> float:
         raise ValueError("truth, lower, and upper must have identical shapes.")
     if truth_arr.size == 0:
         raise ValueError("coverage arrays cannot be empty.")
+    if not (
+        np.all(np.isfinite(truth_arr))
+        and np.all(np.isfinite(lower_arr))
+        and np.all(np.isfinite(upper_arr))
+    ):
+        raise ValueError(
+            "truth and interval bounds must contain only finite values."
+        )
     if np.any(lower_arr > upper_arr):
         raise ValueError("lower interval bounds cannot exceed upper bounds.")
 
