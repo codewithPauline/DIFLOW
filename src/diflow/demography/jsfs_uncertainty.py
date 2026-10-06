@@ -120,6 +120,27 @@ def _resampling_blocks(
     return list(grouped.values()), f"{block_size_bp}-bp genomic block"
 
 
+
+def directional_support_for_estimate(
+    probability_a_to_b_stronger: float,
+    m_a_to_b: float,
+    m_b_to_a: float,
+) -> float:
+    """Orient bootstrap probability to the direction preferred by point estimates.
+
+    If the primary estimate prefers A -> B, support is P(m_A_to_B > m_B_to_A).
+    If it prefers B -> A, support is the complementary probability.
+    Equal point estimates have no preferred direction and return 0.5.
+    """
+    probability = float(probability_a_to_b_stronger)
+    if not 0.0 <= probability <= 1.0:
+        raise ValueError("probability_a_to_b_stronger must lie within [0, 1].")
+    if m_a_to_b > m_b_to_a:
+        return probability
+    if m_b_to_a > m_a_to_b:
+        return 1.0 - probability
+    return 0.5
+
 def bootstrap_asymmetric_jsfs(
     counts: pd.DataFrame,
     population_a: str,
