@@ -456,9 +456,30 @@ diflow report --results results/
 
 See [docs/report.md](docs/report.md).
 
+## Release review
+
+After the empirical validation campaign and matched external-method benchmark
+are complete, evaluate release readiness with:
+
+```bash
+diflow release-review --results validation_campaign/results/
+```
+
+Missing empirical studies are treated as blockers. Calibrated classifier
+thresholds can be applied directly to inference with
+`--thresholds-file selected_thresholds.csv`.
+
 ## External method comparison
 
-Normalize and compare matched simulation outputs from multiple methods:
+Normalize DIFLOW benchmark output:
+
+```bash
+diflow benchmark-export \
+  --input recovery_grid/recovery_grid_replicates.csv \
+  --output diflow_standardized.csv
+```
+
+Then compare matched simulation outputs from multiple methods:
 
 ```bash
 diflow compare \
