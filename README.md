@@ -194,6 +194,25 @@ expansion and unsampled ghost introgression, run:
 diflow benchmark --suite forward --output forward_stress_results/
 ```
 
+## Large recovery grid
+
+For a compute-intensive scaling study across sample sizes, SNP counts, and
+asymmetry strengths:
+
+```bash
+diflow benchmark \
+  --suite grid \
+  --output recovery_grid_results/ \
+  --replicates 10 \
+  --starts 10
+```
+
+The grid writes replicate and summary CSV files plus PNG/PDF validation plots
+for direction accuracy and false directional-positive rates. It requires
+explicit opt-in and is not included in `--suite all`.
+
+See [docs/benchmarking.md](docs/benchmarking.md).
+
 ## Directional evidence
 
 A large fitted migration rate is not automatically treated as a supported arrow.
@@ -316,7 +335,8 @@ DIFLOW/
 ### Validation
 - [x] Validation metric framework
 - [x] Canonical benchmark scenario registry
-- [ ] Large simulation recovery study
+- [x] Large recovery-grid runner and validation plots
+- [ ] Final simulation calibration and release thresholds
 - [ ] False-positive calibration under symmetry
 - [x] Secondary-contact stress benchmark
 - [x] Range-expansion forward-time stress test
