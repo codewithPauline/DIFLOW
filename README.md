@@ -88,7 +88,7 @@ DIFLOW currently includes:
 - sparse geographic candidate-pair construction
 - directed migration networks
 - source-like / sink-like network summaries
-- directional map rendering with optional projected CRS
+- directional map rendering with optional projected CRS with optional projected CRS
 - an end-to-end `diflow infer` command
 - simulation-validation metrics and canonical stress-test scenarios
 - simulation-driven directional threshold calibration
