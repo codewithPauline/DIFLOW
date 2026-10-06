@@ -1,9 +1,14 @@
 # jSFS bootstrap uncertainty
 
-DIFLOW estimates uncertainty for single-time-point asymmetric migration by
-resampling loci with replacement.
+DIFLOW supports two uncertainty resampling strategies for single-time-point
+asymmetric migration inference:
 
-## Procedure
+- locus bootstrap for approximately independent markers
+- fixed genomic-window block bootstrap for linked markers
+
+## Locus bootstrap
+
+By default, usable loci are sampled independently with replacement.
 
 For each population pair:
 
@@ -14,7 +19,45 @@ For each population pair:
 5. refit the asymmetric demographic model,
 6. repeat across bootstrap replicates.
 
-The resulting distribution provides:
+## Genomic block bootstrap
+
+For linked SNPs, users may instead define a fixed genomic window size:
+
+    --bootstrap-block-bp 100000
+
+All usable variants on the same chromosome and within the same fixed window are
+summed into one bootstrap unit. Whole blocks are then sampled with replacement.
+
+This preserves local linkage within a resampled block better than naive
+SNP-by-SNP resampling.
+
+DIFLOW records:
+
+- the resampling unit
+- number of blocks used
+- number of loci represented
+- successful and attempted bootstrap replicates
+
+A block analysis requires at least two usable blocks.
+
+## Choosing a resampling strategy
+
+Use ordinary locus bootstrap when markers are approximately independent, such
+as a dataset intentionally filtered to one SNP per independent locus.
+
+Use genomic block bootstrap when nearby SNPs may be linked and genomic
+coordinates are meaningful.
+
+The block size is a biological/statistical choice, not a universal constant.
+Users should choose it based on linkage scale, marker design, recombination,
+and genome structure where possible.
+
+For reduced-representation data, a one-SNP-per-locus filter remains a
+defensible option when physical block definitions are unavailable.
+
+## Directional support
+
+The resulting bootstrap distribution provides:
 
 - mean m_A_to_B
 - confidence interval for m_A_to_B
@@ -23,9 +66,7 @@ The resulting distribution provides:
 - P(m_A_to_B > m_B_to_A)
 - support for whichever direction has the larger bootstrap mean
 
-## Directional support
-
-If A -> B is the preferred direction,
+If A -> B is preferred,
 
 support = P(m_A_to_B > m_B_to_A).
 
@@ -33,22 +74,14 @@ If B -> A is preferred,
 
 support = 1 - P(m_A_to_B > m_B_to_A).
 
-This prevents reverse-direction edges from being penalized simply because the
-stored probability is defined in A-to-B order.
-
-## Independence assumption
-
-The current bootstrap samples loci as independent units. For datasets where
-multiple SNPs are linked within loci or genomic blocks, users should supply
-one approximately independent SNP per locus or wait for DIFLOW's planned block
-bootstrap layer.
-
-For reduced-representation datasets, locus/block resampling is preferred over
-naive SNP bootstrap when linkage within loci is present.
-
 ## Interpretation
 
 Bootstrap uncertainty addresses sampling variability under the fitted model.
-It does not eliminate bias caused by an incorrect demographic model, ghost
-populations, unsampled migration routes, ancestral structure, or severe
+
+It does not eliminate bias caused by demographic misspecification, ghost
+populations, ancestral structure, incorrect population definitions, or severe
 identifiability problems.
+
+The block-bootstrap implementation is now available, but simulation-based
+coverage calibration under realistic linkage remains part of DIFLOW's
+validation roadmap.
