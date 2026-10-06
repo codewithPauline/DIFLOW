@@ -1,6 +1,6 @@
 # Command-line reference
 
-DIFLOW currently provides eight main commands:
+DIFLOW currently provides nine main commands:
 
 - diflow inspect
 - diflow infer
@@ -10,6 +10,7 @@ DIFLOW currently provides eight main commands:
 - diflow slurm
 - diflow report
 - diflow compare
+- diflow campaign
 
 ## diflow inspect
 
@@ -170,3 +171,16 @@ Compare standardized simulation outputs from multiple methods:
       --method DIFLOW=diflow.csv \
       --method OTHER=other.csv \
       --output comparison/
+
+
+## diflow campaign
+
+Generate a reproducible multi-job Slurm campaign for release-grade validation:
+
+    diflow campaign \
+      --output validation_campaign/ \
+      --replicates 50 \
+      --bootstrap-replicates 100 \
+      --cpus 8 \
+      --mem-gb 64 \
+      --hours 72
