@@ -89,6 +89,7 @@ def run_infer_pipeline(
     min_directional_support: float = 0.95,
     min_abs_asymmetry: float = 0.25,
     polarized: bool = False,
+    map_crs: str | None = None,
     prepare_only: bool = False,
     seed: int | None = None,
 ) -> PipelineResult:
@@ -128,6 +129,7 @@ def run_infer_pipeline(
         "min_directional_support": min_directional_support,
         "min_abs_asymmetry": min_abs_asymmetry,
         "polarized": polarized,
+        "map_crs": map_crs,
         "prepare_only": prepare_only,
         "seed": seed,
     }
@@ -336,6 +338,7 @@ def run_infer_pipeline(
             pairwise=pairwise,
             coordinates=coordinates,
             output_dir=outdir,
+            map_crs=map_crs,
         )
 
     metadata = pd.DataFrame(
@@ -357,6 +360,7 @@ def run_infer_pipeline(
                 "min_directional_support": min_directional_support,
                 "min_abs_asymmetry": min_abs_asymmetry,
                 "polarized": polarized,
+                "map_crs": map_crs,
                 "spectrum_orientation": (
                     "polarized/unfolded (ALT asserted derived)"
                     if polarized
