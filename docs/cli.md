@@ -89,3 +89,17 @@ The CLI currently defaults to random seed 42. Users may override it with --seed.
 ## Outputs
 
 See [outputs.md](outputs.md) for the full output reference.
+
+## Benchmark suites
+
+DIFLOW provides four benchmark modes:
+
+    diflow benchmark --suite recovery --output recovery/
+    diflow benchmark --suite stress --output stress/
+    diflow benchmark --suite forward --output forward/
+    diflow benchmark --suite grid --output grid/
+
+`--suite all` runs recovery, stress, and forward-time stress suites.
+
+The large recovery grid is excluded from `all` because it is substantially
+more computationally expensive and must be requested explicitly.
