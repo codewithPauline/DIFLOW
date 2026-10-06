@@ -7,7 +7,11 @@ from pathlib import Path
 
 from diflow.inspection import PRESETS, inspect_dataset
 from diflow.pipeline import run_infer_pipeline
-from diflow.validation import write_recovery_benchmark, write_stress_benchmark
+from diflow.validation import (
+    write_forward_stress_benchmark,
+    write_recovery_benchmark,
+    write_stress_benchmark,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -50,7 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--output", required=True, help="Benchmark output directory.")
     benchmark.add_argument(
         "--suite",
-        choices=("recovery", "stress", "all"),
+        choices=("recovery", "stress", "forward", "all"),
         default="all",
         help="Benchmark suite to run.",
     )
@@ -229,10 +233,29 @@ def main(argv=None) -> int:
             print(summary.to_string(index=False))
             print("")
 
+        if args.suite in {"forward", "all"}:
+            forward_dir = (
+                args.output if args.suite == "forward" else str(Path(args.output) / "forward")
+            )
+            raw, summary = write_forward_stress_benchmark(
+                output_dir=forward_dir,
+                replicates=args.replicates,
+                loci=args.sites,
+                sample_sizes=(args.chromosomes, args.chromosomes),
+                starts=args.starts,
+                maxiter=args.maxiter,
+                seed=args.seed,
+            )
+            print("DIFLOW independent forward-time stress benchmark")
+            print(f"Replicate rows: {len(raw)}")
+            print(f"Scenarios: {len(summary)}")
+            print(summary.to_string(index=False))
+            print("")
+
         print(f"Results: {args.output}")
         print(
-            "Recovery tests model-consistent identifiability; stress tests challenge "
-            "model selection and spurious direction under alternative histories."
+            "Recovery tests model-consistent identifiability; stress and forward "
+            "suites challenge model selection and spurious direction under alternative histories."
         )
         return 0
 
