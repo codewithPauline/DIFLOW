@@ -23,6 +23,8 @@ def test_validation_campaign_writes_manifest_and_jobs(tmp_path):
         "mechanistic_linkage",
     }
     assert manifest["settings"]["replicates"] == 5
+    assert "release_review_command" in manifest["postprocessing"]
+    assert "release-review" in manifest["postprocessing"]["release_review_command"]
 
     root = manifest_path.parent
     assert (root / "01_recovery_grid.slurm").exists()
