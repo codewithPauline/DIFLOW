@@ -356,7 +356,7 @@ DIFLOW includes an optional msprime/tskit validation backend:
 
     python -m pip install -e ".[dev,demography,validation]"
 
-Run:
+For a single-regime diagnostic run:
 
     diflow benchmark \
       --suite mechanistic \
@@ -369,6 +369,22 @@ Run:
       --mechanistic-mutation-rate 1e-8 \
       --mechanistic-block-sizes 50000,100000,250000 \
       --linked-bootstrap-replicates 100
+
+For release-grade linkage validation across recombination and marker-density
+regimes, use:
+
+    diflow benchmark \
+      --suite mechanistic-grid \
+      --output mechanistic_grid/ \
+      --replicates 20 \
+      --chromosomes 20 \
+      --mechanistic-nref 10000 \
+      --mechanistic-block-sizes 50000,100000,250000 \
+      --linked-bootstrap-replicates 100 \
+      --mechanistic-grid-workers 8
+
+The default grid crosses three recombination rates and three mutation-rate
+regimes, while retaining block-size sensitivity within every grid cell.
 
 This layer simulates ancestry with recombination and neutral mutations directly.
 Forward A -> B migration is translated into msprime's backward-time B -> A
