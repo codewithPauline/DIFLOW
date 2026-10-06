@@ -89,7 +89,7 @@ def run_infer_pipeline(
         raise ValueError("projection_chromosomes must be at least 2.")
     if starts < 1:
         raise ValueError("starts must be at least 1.")
-    if bootstrap_replicates not in (0, 1) and bootstrap_replicates < 2:
+    if bootstrap_replicates != 0 and bootstrap_replicates < 2:
         raise ValueError("bootstrap_replicates must be 0 or at least 2.")
     if bootstrap_starts < 1:
         raise ValueError("bootstrap_starts must be at least 1.")
