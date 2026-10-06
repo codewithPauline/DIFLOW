@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 
 from diflow.inspection import PRESETS, inspect_dataset
 from diflow.pipeline import run_infer_pipeline
-from diflow.validation import write_recovery_benchmark
+from diflow.validation import write_recovery_benchmark, write_stress_benchmark
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -47,6 +48,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run model-consistent known-truth migration recovery benchmarks.",
     )
     benchmark.add_argument("--output", required=True, help="Benchmark output directory.")
+    benchmark.add_argument(
+        "--suite",
+        choices=("recovery", "stress", "all"),
+        default="all",
+        help="Benchmark suite to run.",
+    )
     benchmark.add_argument("--replicates", type=int, default=10)
     benchmark.add_argument(
         "--chromosomes",
@@ -185,8 +192,7 @@ def main(argv=None) -> int:
         if args.starts < 1:
             parser.error("--starts must be at least 1.")
 
-        raw, summary = write_recovery_benchmark(
-            output_dir=args.output,
+        common = dict(
             replicates=args.replicates,
             sample_sizes=(args.chromosomes, args.chromosomes),
             segregating_sites=args.sites,
@@ -194,16 +200,39 @@ def main(argv=None) -> int:
             maxiter=args.maxiter,
             seed=args.seed,
         )
-        print("DIFLOW known-truth recovery benchmark")
-        print(f"Replicate rows: {len(raw)}")
-        print(f"Scenarios: {len(summary)}")
+
+        if args.suite in {"recovery", "all"}:
+            recovery_dir = (
+                args.output if args.suite == "recovery" else str(Path(args.output) / "recovery")
+            )
+            raw, summary = write_recovery_benchmark(
+                output_dir=recovery_dir,
+                **common,
+            )
+            print("DIFLOW known-truth recovery benchmark")
+            print(f"Replicate rows: {len(raw)}")
+            print(f"Scenarios: {len(summary)}")
+            print(summary.to_string(index=False))
+            print("")
+
+        if args.suite in {"stress", "all"}:
+            stress_dir = (
+                args.output if args.suite == "stress" else str(Path(args.output) / "stress")
+            )
+            raw, summary = write_stress_benchmark(
+                output_dir=stress_dir,
+                **common,
+            )
+            print("DIFLOW demographic stress benchmark")
+            print(f"Replicate rows: {len(raw)}")
+            print(f"Scenarios: {len(summary)}")
+            print(summary.to_string(index=False))
+            print("")
+
         print(f"Results: {args.output}")
-        print("")
-        print(summary.to_string(index=False))
-        print("")
         print(
-            "This is a model-consistent recovery benchmark. Passing it is necessary "
-            "but does not establish robustness to demographic misspecification."
+            "Recovery tests model-consistent identifiability; stress tests challenge "
+            "model selection and spurious direction under alternative histories."
         )
         return 0
 
