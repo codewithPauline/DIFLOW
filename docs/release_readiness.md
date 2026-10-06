@@ -39,7 +39,7 @@ should claim validated default behavior:
 4. Execute matched benchmarks against established external methods, respecting
    differences in estimands.
 5. Run at least one real-data case study as a demonstration of workflow and
-   interpretation, not as proof of accuracy.
+   interpretation, not as proof of accuracy. Follow [case_study_protocol.md](case_study_protocol.md).
 6. Derive and document recommended minimum data requirements from the completed simulation campaign. Known failure regimes are already documented in [limitations.md](limitations.md).
 7. Freeze a release candidate, rerun all tests/benchmarks, archive outputs, and
    only then create a formal software release/DOI.
