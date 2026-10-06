@@ -10,6 +10,7 @@ from diflow.pipeline import run_infer_pipeline
 from diflow.validation import (
     write_forward_stress_benchmark,
     write_recovery_benchmark,
+    write_recovery_grid,
     write_stress_benchmark,
 )
 
@@ -54,7 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--output", required=True, help="Benchmark output directory.")
     benchmark.add_argument(
         "--suite",
-        choices=("recovery", "stress", "forward", "all"),
+        choices=("recovery", "stress", "forward", "grid", "all"),
         default="all",
         help="Benchmark suite to run.",
     )
@@ -261,10 +262,27 @@ def main(argv=None) -> int:
             print(summary.to_string(index=False))
             print("")
 
+        if args.suite in {"grid", "all"}:
+            grid_dir = (
+                args.output if args.suite == "grid" else str(Path(args.output) / "grid")
+            )
+            raw, summary, figures = write_recovery_grid(
+                output_dir=grid_dir,
+                replicates=args.replicates,
+                starts=args.starts,
+                maxiter=args.maxiter,
+                seed=args.seed,
+            )
+            print("DIFLOW large recovery-grid benchmark")
+            print(f"Replicate rows: {len(raw)}")
+            print(f"Grid cells: {len(summary)}")
+            print(f"Validation figures: {len(figures)}")
+            print("")
+
         print(f"Results: {args.output}")
         print(
             "Recovery tests model-consistent identifiability; stress and forward "
-            "suites challenge model selection and spurious direction under alternative histories."
+            "suites challenge misspecification; grid evaluates scaling across data sizes."
         )
         return 0
 
