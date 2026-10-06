@@ -112,6 +112,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optimization starts within each bootstrap replicate.",
     )
     infer.add_argument(
+        "--bootstrap-block-bp",
+        type=int,
+        default=None,
+        help=(
+            "Resample fixed genomic windows of this size in bp instead of "
+            "individual loci. Recommended when nearby SNPs are linked."
+        ),
+    )
+    infer.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -273,6 +282,7 @@ def main(argv=None) -> int:
             maxiter=effort["maxiter"],
             bootstrap_replicates=effort["bootstrap_replicates"],
             bootstrap_starts=effort["bootstrap_starts"],
+            bootstrap_block_bp=args.bootstrap_block_bp,
             prepare_only=args.prepare_only,
             seed=args.seed,
         )
@@ -282,7 +292,13 @@ def main(argv=None) -> int:
         if args.prepare_only:
             print("Inference skipped (--prepare-only).")
         elif effort["bootstrap_replicates"] >= 2:
-            print("Bootstrap directional evidence classification completed.")
+            if args.bootstrap_block_bp is None:
+                print("Locus-bootstrap directional evidence classification completed.")
+            else:
+                print(
+                    "Block-bootstrap directional evidence classification completed "
+                    f"({args.bootstrap_block_bp} bp windows)."
+                )
         else:
             print("Direction labels are provisional; bootstrap is disabled.")
         return 0
