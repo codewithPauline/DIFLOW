@@ -295,3 +295,56 @@ because it can require substantial compute. Users must opt in with
 
 The generated figures are validation summaries, not final manuscript figures;
 users should still inspect convergence and replicate counts before publication.
+
+
+## Linked-marker bootstrap calibration
+
+DIFLOW can directly compare naive locus resampling against genomic block
+resampling on the same simulated correlated-marker datasets:
+
+    diflow benchmark \
+      --suite linked \
+      --output linked_calibration/ \
+      --replicates 20 \
+      --chromosomes 20 \
+      --linked-blocks 50 \
+      --snps-per-block 10 \
+      --linked-block-bp 100000 \
+      --linkage-concentration 25 \
+      --linked-bootstrap-replicates 100 \
+      --starts 5
+
+Each simulated genomic block shares a latent jSFS distribution. This induces
+within-block dependence while preserving known migration truth.
+
+The simulator is intentionally described as a **correlated-block model**. It is
+not a mechanistic recombination or haplotype simulator.
+
+Smaller `--linkage-concentration` values create stronger block-to-block
+heterogeneity and stronger within-block dependence. Larger values make blocks
+more similar to the global demographic expectation.
+
+For every simulated dataset, DIFLOW analyzes the exact same allele counts using:
+
+- independent locus bootstrap
+- fixed genomic-window block bootstrap
+
+The calibration reports:
+
+- coverage of the true m(A -> B)
+- coverage of the true m(B -> A)
+- mean confidence-interval width
+- strong directional-support rate
+- false strong-direction support under symmetric migration
+- number of loci and resampling blocks
+
+Outputs include:
+
+- `linked_bootstrap_replicates.csv`
+- `linked_bootstrap_summary.csv`
+- coverage comparison PNG/PDF figures
+- false-direction comparison PNG/PDF figures
+
+This benchmark tests whether block resampling improves uncertainty calibration
+when markers are correlated. A future mechanistic LD/recombination simulator
+would be an even stronger validation layer.
