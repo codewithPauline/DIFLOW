@@ -12,6 +12,7 @@ from diflow.validation import (
     write_recovery_benchmark,
     write_recovery_grid,
     write_stress_benchmark,
+    write_linked_bootstrap_calibration,
 )
 
 
@@ -55,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--output", required=True, help="Benchmark output directory.")
     benchmark.add_argument(
         "--suite",
-        choices=("recovery", "stress", "forward", "grid", "all"),
+        choices=("recovery", "stress", "forward", "grid", "linked", "all"),
         default="all",
         help="Benchmark suite to run.",
     )
@@ -75,6 +76,15 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--starts", type=int, default=10)
     benchmark.add_argument("--maxiter", type=int, default=100)
     benchmark.add_argument("--seed", type=int, default=42)
+    benchmark.add_argument("--linked-blocks", type=int, default=50)
+    benchmark.add_argument("--snps-per-block", type=int, default=10)
+    benchmark.add_argument("--linked-block-bp", type=int, default=100000)
+    benchmark.add_argument(
+        "--linkage-concentration",
+        type=float,
+        default=25.0,
+        help="Smaller values create stronger within-block dependence.",
+    )
 
     infer = subparsers.add_parser(
         "infer",
@@ -276,6 +286,26 @@ def main(argv=None) -> int:
             print("DIFLOW large recovery-grid benchmark")
             print(f"Replicate rows: {len(raw)}")
             print(f"Grid cells: {len(summary)}")
+            print(f"Validation figures: {len(figures)}")
+            print("")
+
+        if args.suite == "linked":
+            raw, summary, figures = write_linked_bootstrap_calibration(
+                output_dir=args.output,
+                replicates=args.replicates,
+                sample_sizes=(args.chromosomes, args.chromosomes),
+                blocks=args.linked_blocks,
+                snps_per_block=args.snps_per_block,
+                block_size_bp=args.linked_block_bp,
+                concentration=args.linkage_concentration,
+                bootstrap_replicates=max(args.replicates, 20),
+                bootstrap_starts=max(1, min(args.starts, 5)),
+                maxiter=args.maxiter,
+                seed=args.seed,
+            )
+            print("DIFLOW linked-marker bootstrap calibration")
+            print(f"Replicate rows: {len(raw)}")
+            print(f"Summary rows: {len(summary)}")
             print(f"Validation figures: {len(figures)}")
             print("")
 
