@@ -22,6 +22,7 @@ from diflow.validation import (
     write_threshold_calibration,
     load_calibrated_thresholds,
     compare_method_files,
+    write_standardized_diflow_benchmark,
     ReleaseCriteria,
     review_validation_campaign,
 )
@@ -116,6 +117,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--mechanistic-block-sizes",
         default="50000,100000,250000",
         help="Comma-separated block sizes in bp for msprime linkage calibration.",
+    )
+
+    benchmark_export = subparsers.add_parser(
+        "benchmark-export",
+        help="Convert DIFLOW recovery outputs to the standardized comparator schema.",
+    )
+    benchmark_export.add_argument("--input", required=True)
+    benchmark_export.add_argument("--output", required=True)
+    benchmark_export.add_argument(
+        "--estimand",
+        default="dadi_scaled_migration",
+        help="Explicit estimand label written to the comparator table.",
     )
 
     compare = subparsers.add_parser(
@@ -567,6 +580,15 @@ def main(argv=None) -> int:
             "Recovery tests model-consistent identifiability; stress and forward "
             "suites challenge misspecification; grid evaluates scaling across data sizes."
         )
+        return 0
+
+    if args.command == "benchmark-export":
+        path = write_standardized_diflow_benchmark(
+            args.input,
+            args.output,
+            estimand=args.estimand,
+        )
+        print(f"DIFLOW comparator-ready benchmark: {path}")
         return 0
 
     if args.command == "compare":
