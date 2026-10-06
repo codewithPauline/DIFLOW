@@ -171,6 +171,13 @@ the validation roadmap.
 
 See [docs/benchmarking.md](docs/benchmarking.md).
 
+For deliberately out-of-model histories, including serial-founder range
+expansion and unsampled ghost introgression, run:
+
+```bash
+diflow benchmark --suite forward --output forward_stress_results/
+```
+
 ## Directional evidence
 
 A large fitted migration rate is not automatically treated as a supported arrow.
@@ -277,7 +284,8 @@ DIFLOW/
 - [x] Locus-bootstrap uncertainty
 - [ ] Block-bootstrap uncertainty
 - [ ] Profile-likelihood diagnostics
-- [ ] Folded/unfolded polarization safeguards
+- [x] Unpolarized/folded default for ordinary VCF data
+- [ ] Explicit ancestral-polarization input workflow
 
 ### Spatial inference and reporting
 - [x] Geographic candidate-pair graphs
@@ -294,9 +302,9 @@ DIFLOW/
 - [x] Canonical benchmark scenario registry
 - [ ] Large simulation recovery study
 - [ ] False-positive calibration under symmetry
-- [ ] Secondary-contact discrimination
-- [ ] Range-expansion stress test
-- [ ] Ghost-population stress test
+- [x] Secondary-contact stress benchmark
+- [x] Range-expansion forward-time stress test
+- [x] Ghost-population forward-time stress test
 - [ ] Linked-locus/block-bootstrap validation
 - [ ] Benchmark against established methods
 
