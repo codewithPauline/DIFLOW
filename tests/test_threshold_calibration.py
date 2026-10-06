@@ -181,3 +181,17 @@ def test_invalid_preferred_direction_is_rejected():
 def test_evaluate_thresholds_rejects_invalid_thresholds(kwargs, error_match):
     with pytest.raises(ValueError, match=error_match):
         evaluate_thresholds(_evidence(), **kwargs)
+
+
+
+def test_incomplete_calibration_rows_are_not_silently_dropped():
+    evidence = _evidence()
+    evidence.loc[0, "directional_support"] = float("nan")
+
+    with pytest.raises(ValueError, match="incomplete evidence rows"):
+        evaluate_thresholds(
+            evidence,
+            min_model_weight=0.7,
+            min_directional_support=0.95,
+            min_abs_asymmetry=0.25,
+        )
