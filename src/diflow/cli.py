@@ -109,6 +109,12 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--mechanistic-recombination-rate", type=float, default=1e-8)
     benchmark.add_argument("--mechanistic-mutation-rate", type=float, default=1e-8)
     benchmark.add_argument(
+        "--mechanistic-grid-workers",
+        type=int,
+        default=1,
+        help="Process-isolated workers across mechanistic grid cells.",
+    )
+    benchmark.add_argument(
         "--decision-bootstrap-replicates",
         type=int,
         default=100,
@@ -442,6 +448,8 @@ def main(argv=None) -> int:
             parser.error("--mechanistic-recombination-rate must be non-negative.")
         if args.mechanistic_mutation_rate <= 0:
             parser.error("--mechanistic-mutation-rate must be positive.")
+        if args.mechanistic_grid_workers < 1:
+            parser.error("--mechanistic-grid-workers must be at least 1.")
         try:
             mechanistic_block_sizes = tuple(
                 int(value.strip())
@@ -578,6 +586,7 @@ def main(argv=None) -> int:
                 bootstrap_starts=max(1, min(args.starts, 5)),
                 maxiter=args.maxiter,
                 seed=args.seed,
+                workers=args.mechanistic_grid_workers,
             )
             print("DIFLOW mechanistic linkage grid")
             print(f"Replicate rows: {len(raw)}")
