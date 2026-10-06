@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from diflow.validation.comparators import (
+    compare_method_files,
     summarize_method_comparison,
     summarize_direction_only_comparison,
     standardize_diflow_benchmark,
@@ -105,3 +106,27 @@ def test_direction_only_summary_allows_different_estimands():
     assert set(summary["method"]) == {"DIFLOW", "Other"}
     assert "bias_m_a_to_b" not in summary.columns
     assert "direction_accuracy" in summary.columns
+
+
+
+def test_method_comparison_writes_provenance(tmp_path):
+    a_path = tmp_path / "a.csv"
+    b_path = tmp_path / "b.csv"
+    _table().assign(estimand="dadi_scaled_migration").to_csv(a_path, index=False)
+    _table().assign(estimand="dadi_scaled_migration").to_csv(b_path, index=False)
+
+    compare_method_files(
+        {"DIFLOW": a_path, "Other": b_path},
+        output_dir=tmp_path / "out",
+    )
+
+    import json
+    metadata = json.loads(
+        (tmp_path / "out" / "comparison_metadata.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert metadata["direction_only"] is False
+    assert metadata["require_complete_match"] is True
+    assert metadata["methods"] == ["DIFLOW", "Other"]
+    assert metadata["estimands"] == ["dadi_scaled_migration"]
