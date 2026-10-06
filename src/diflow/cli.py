@@ -261,6 +261,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     infer.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help=(
+            "Process-isolated population-pair workers. Increase cautiously because "
+            "each worker may run memory-intensive demographic fits."
+        ),
+    )
+    infer.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -647,6 +656,7 @@ def main(argv=None) -> int:
             min_abs_asymmetry=args.min_abs_asymmetry,
             polarized=args.polarized,
             map_crs=args.map_crs,
+            workers=args.workers,
             prepare_only=args.prepare_only,
             seed=args.seed,
         )
