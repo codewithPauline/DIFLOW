@@ -61,6 +61,7 @@ def write_network_outputs(
     pairwise: pd.DataFrame,
     coordinates: pd.DataFrame,
     output_dir,
+    map_crs: str | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -76,6 +77,7 @@ def write_network_outputs(
             coordinates,
             flows,
             include_ambiguous=True,
+            target_crs=map_crs,
         )
         fig = ax.figure
         fig.tight_layout()
