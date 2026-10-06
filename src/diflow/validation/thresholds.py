@@ -97,6 +97,16 @@ def _validate_evidence_table(frame: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(
             "truth_direction contains unsupported labels: " + ", ".join(unknown)
         )
+
+    preferred = clean["preferred_direction"].dropna().astype(str)
+    valid_preferred = {"symmetric", "none", "A->B", "B->A"}
+    unknown_preferred = sorted(set(preferred) - valid_preferred)
+    if unknown_preferred:
+        raise ValueError(
+            "preferred_direction contains unsupported labels: "
+            + ", ".join(unknown_preferred)
+        )
+
     if clean.empty:
         raise ValueError("calibration table contains no usable rows.")
     return clean
