@@ -82,7 +82,7 @@ DIFLOW currently includes:
 - AIC/AICc utilities and Akaike weights
 - multi-start optimization
 - convergence and stability diagnostics
-- locus-bootstrap uncertainty for pairwise jSFS inference
+- locus-bootstrap and fixed genomic-window block-bootstrap uncertainty for pairwise jSFS inference
 - directional support probabilities
 - supported / ambiguous / unsupported evidence classification
 - sparse geographic candidate-pair construction
@@ -146,6 +146,22 @@ diflow infer \
 ```
 
 Bootstrap demographic inference is computationally expensive because each replicate refits an asymmetric demographic model.
+
+For linked SNPs, users can resample fixed genomic windows instead of individual loci:
+
+```bash
+diflow infer \
+  --vcf data.vcf \
+  --popmap populations.tsv \
+  --coords coordinates.csv \
+  --projection-chromosomes 8 \
+  --neighbors 4 \
+  --bootstrap-replicates 100 \
+  --bootstrap-block-bp 100000 \
+  --output results/
+```
+
+DIFLOW records the resampling unit and number of blocks in the output so uncertainty provenance remains explicit.
 
 ## Known-truth benchmark
 
@@ -282,7 +298,7 @@ DIFLOW/
 - [x] Multi-start optimization
 - [x] Model comparison
 - [x] Locus-bootstrap uncertainty
-- [ ] Block-bootstrap uncertainty
+- [x] Genomic block-bootstrap uncertainty
 - [ ] Profile-likelihood diagnostics
 - [x] Unpolarized/folded default for ordinary VCF data
 - [ ] Explicit ancestral-polarization input workflow
