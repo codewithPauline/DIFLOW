@@ -14,10 +14,17 @@ Each method CSV must contain:
 - `estimated_m_a_to_b`
 - `estimated_m_b_to_a`
 
+Convert DIFLOW recovery output to the standard schema first:
+
+    diflow benchmark-export \
+      --input recovery_grid_results/recovery_grid_replicates.csv \
+      --output diflow_standardized.csv \
+      --estimand dadi_scaled_migration
+
 Compare two or more methods with:
 
     diflow compare \
-      --method DIFLOW=diflow_results.csv \
+      --method DIFLOW=diflow_standardized.csv \
       --method OTHER=other_method_results.csv \
       --output comparison/
 
@@ -35,3 +42,22 @@ migration parameter are not automatically interchangeable.
 The comparison framework is implemented; the final established-method
 benchmark study still requires actually running and normalizing the selected
 external tools under matched simulated truth.
+
+
+## Matched-comparison requirement
+
+Release-grade comparisons are strict by default.
+
+Every method must contain the same `(scenario, replicate)` keys, and the known
+truth values must match exactly across methods. DIFLOW also rejects a combined
+table when multiple non-empty `estimand` labels are present.
+
+This prevents a visually attractive comparison from silently mixing:
+
+- different simulation replicates
+- different truth parameters
+- incompatible migration estimands
+
+For exploratory work only, `--allow-unmatched` disables the complete-key
+requirement. Truth inconsistencies and mixed estimands remain scientific
+problems and should not be ignored in publication analyses.
