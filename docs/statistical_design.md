@@ -69,8 +69,9 @@ This statistic is descriptive and does not replace uncertainty estimation.
 
 ## Uncertainty
 
-The current real-data uncertainty layer resamples usable loci with replacement,
-reconstructs the projected jSFS, and refits the asymmetric model.
+The current real-data uncertainty layer can either resample usable loci
+independently or resample fixed genomic windows as blocks, reconstruct the
+projected jSFS, and refit the asymmetric model.
 
 For A and B, directional support includes:
 
@@ -79,9 +80,9 @@ P(m_A_to_B > m_B_to_A).
 When B -> A is the preferred direction, support is evaluated using the reverse
 probability rather than incorrectly reusing the A -> B probability.
 
-Linked markers violate the simplest locus-independence assumption. Block
-bootstrap support remains a required extension for linked or reduced-
-representation genomic datasets.
+Linked markers violate the simplest locus-independence assumption. DIFLOW now
+supports fixed genomic-window block bootstrap. Simulation calibration of
+interval coverage under realistic linkage remains required.
 
 ## Evidence classification
 
