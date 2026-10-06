@@ -44,3 +44,19 @@ def test_infer_accepts_polarized_mode():
         ]
     )
     assert args.polarized is True
+
+
+
+def test_profile_cli_parses():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "profile",
+            "--spectrum", "pair.npy",
+            "--parameter", "m_a_to_b",
+            "--output", "profile_out",
+        ]
+    )
+    assert args.command == "profile"
+    assert args.parameter == "m_a_to_b"
+    assert args.points == 15
