@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import json
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ from diflow.demography import (
 )
 from diflow.io import allele_counts_from_vcf, read_popmap
 from diflow.network import build_candidate_pairs
+from diflow.provenance import write_provenance
 from diflow.spectra import pairwise_projected_jsfs
 from .outputs import write_network_outputs
 
@@ -112,6 +114,36 @@ def run_infer_pipeline(
     outdir.mkdir(parents=True, exist_ok=True)
     spectra_dir = outdir / "spectra"
     spectra_dir.mkdir(exist_ok=True)
+
+    resolved_settings = {
+        "projection_chromosomes": projection_chromosomes,
+        "k_nearest": k_nearest,
+        "max_distance_km": max_distance_km,
+        "starts": starts,
+        "maxiter": maxiter,
+        "bootstrap_replicates": bootstrap_replicates,
+        "bootstrap_starts": bootstrap_starts,
+        "bootstrap_block_bp": bootstrap_block_bp,
+        "min_model_weight": min_model_weight,
+        "min_directional_support": min_directional_support,
+        "min_abs_asymmetry": min_abs_asymmetry,
+        "polarized": polarized,
+        "prepare_only": prepare_only,
+        "seed": seed,
+    }
+    (outdir / "resolved_config.json").write_text(
+        json.dumps(resolved_settings, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    write_provenance(
+        outdir / "run_provenance.json",
+        inputs={
+            "vcf": vcf_path,
+            "popmap": popmap_path,
+            "coordinates": coordinates_path,
+        },
+        settings=resolved_settings,
+    )
 
     popmap = read_popmap(popmap_path)
     coordinates = _read_coordinates(coordinates_path)
