@@ -81,3 +81,19 @@ def test_infer_accepts_calibrated_threshold_file():
     assert args.min_model_weight == 0.85
     assert args.min_directional_support is None
     assert args.min_abs_asymmetry is None
+
+
+
+def test_benchmark_export_command_parses():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "benchmark-export",
+            "--input", "recovery.csv",
+            "--output", "diflow_standardized.csv",
+            "--estimand", "dadi_scaled_migration",
+        ]
+    )
+    assert args.command == "benchmark-export"
+    assert args.input == "recovery.csv"
+    assert args.output == "diflow_standardized.csv"
