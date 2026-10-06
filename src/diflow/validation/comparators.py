@@ -57,6 +57,83 @@ def validate_comparator_table(
     return out
 
 
+
+
+def validate_matched_comparison(
+    results: pd.DataFrame,
+    *,
+    require_complete_match: bool = True,
+) -> pd.DataFrame:
+    """Verify that methods are compared on identical known-truth replicates.
+
+    For each (scenario, replicate) key, truth values must agree across methods.
+    By default every method must contain the same set of keys.
+    """
+    required = _REQUIRED | {"method"}
+    if not required.issubset(results.columns):
+        raise ValueError("comparison results are missing required columns.")
+
+    frame = results.copy()
+    truth_counts = (
+        frame.groupby(["scenario", "replicate"])[
+            ["truth_m_a_to_b", "truth_m_b_to_a"]
+        ]
+        .nunique(dropna=False)
+    )
+    inconsistent = truth_counts[
+        (truth_counts["truth_m_a_to_b"] > 1)
+        | (truth_counts["truth_m_b_to_a"] > 1)
+    ]
+    if not inconsistent.empty:
+        first = inconsistent.index[0]
+        raise ValueError(
+            "methods disagree on simulation truth for "
+            f"scenario={first[0]!r}, replicate={first[1]!r}."
+        )
+
+    if require_complete_match:
+        methods = sorted(set(frame["method"].astype(str)))
+        expected = None
+        expected_method = None
+        for method in methods:
+            subset = frame[frame["method"].astype(str) == method]
+            keys = set(
+                zip(
+                    subset["scenario"].astype(str),
+                    subset["replicate"].astype(str),
+                )
+            )
+            if expected is None:
+                expected = keys
+                expected_method = method
+                continue
+            if keys != expected:
+                missing = sorted(expected - keys)[:5]
+                extra = sorted(keys - expected)[:5]
+                raise ValueError(
+                    "method benchmark keys are not matched: "
+                    f"{method} differs from {expected_method}; "
+                    f"missing examples={missing}, extra examples={extra}."
+                )
+
+    if "estimand" in frame.columns:
+        estimands = sorted(
+            {
+                str(value).strip()
+                for value in frame["estimand"].dropna()
+                if str(value).strip()
+            }
+        )
+        if len(estimands) > 1:
+            raise ValueError(
+                "comparison contains multiple estimands: "
+                + ", ".join(estimands)
+                + ". Convert to a compatible quantity or compare separately."
+            )
+
+    return frame
+
+
 def summarize_method_comparison(
     results: pd.DataFrame,
     *,
@@ -115,6 +192,7 @@ def compare_method_files(
     *,
     output_dir: str | Path,
     asymmetry_threshold: float = 0.25,
+    require_complete_match: bool = True,
 ) -> tuple[pd.DataFrame, pd.DataFrame, list[Path]]:
     """Read standardized method CSVs and write side-by-side benchmark outputs."""
     if len(methods) < 2:
@@ -126,6 +204,10 @@ def compare_method_files(
         frames.append(validate_comparator_table(frame, method=method))
 
     combined = pd.concat(frames, ignore_index=True)
+    combined = validate_matched_comparison(
+        combined,
+        require_complete_match=require_complete_match,
+    )
     summary = summarize_method_comparison(
         combined,
         asymmetry_threshold=asymmetry_threshold,
