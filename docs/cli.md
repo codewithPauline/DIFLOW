@@ -1,9 +1,13 @@
 # Command-line reference
 
-DIFLOW currently provides two main commands:
+DIFLOW currently provides six main commands:
 
 - diflow inspect
 - diflow infer
+- diflow benchmark
+- diflow calibrate
+- diflow profile
+- diflow slurm
 
 ## diflow inspect
 
@@ -37,7 +41,7 @@ Example:
       --preset standard \
       --output results/
 
-Important options include projection-chromosomes, neighbors, max-distance-km, preset, starts, maxiter, bootstrap-replicates, bootstrap-starts, bootstrap-block-bp, seed, and prepare-only.
+Important options include projection-chromosomes, neighbors, max-distance-km, preset, starts, maxiter, bootstrap-replicates, bootstrap-starts, bootstrap-block-bp, min-model-weight, min-directional-support, min-abs-asymmetry, map-crs, polarized, seed, and prepare-only.
 
 Explicit optimization and bootstrap flags override preset values.
 
@@ -92,13 +96,15 @@ See [outputs.md](outputs.md) for the full output reference.
 
 ## Benchmark suites
 
-DIFLOW provides five benchmark modes:
+DIFLOW provides seven benchmark modes:
 
     diflow benchmark --suite recovery --output recovery/
     diflow benchmark --suite stress --output stress/
     diflow benchmark --suite forward --output forward/
     diflow benchmark --suite grid --output grid/
     diflow benchmark --suite linked --output linked/
+    diflow benchmark --suite mechanistic --output mechanistic/
+    diflow benchmark --suite decision --output decision/
 
 `--suite all` runs recovery, stress, and forward-time stress suites.
 
@@ -116,3 +122,33 @@ The linked calibration suite has additional controls:
 
 These control the number and size of correlated marker blocks and the amount of
 bootstrap effort applied to each simulated dataset.
+
+
+## diflow calibrate
+
+Calibrate final directional thresholds from a known-truth evidence table:
+
+    diflow calibrate \
+      --evidence decision/decision_evidence.csv \
+      --output calibration/ \
+      --max-fpr 0.05
+
+## diflow profile
+
+Profile one scaled directional migration parameter from a saved spectrum:
+
+    diflow profile \
+      --spectrum results/spectra/A__B.npy \
+      --parameter m_a_to_b \
+      --output profile/
+
+## diflow slurm
+
+Generate a Slurm script for an existing DIFLOW command:
+
+    diflow slurm \
+      --run-command "diflow infer ..." \
+      --script diflow_run.slurm \
+      --cpus 8 \
+      --mem-gb 64 \
+      --hours 72
