@@ -77,6 +77,12 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--maxiter", type=int, default=100)
     benchmark.add_argument("--seed", type=int, default=42)
     benchmark.add_argument("--linked-blocks", type=int, default=50)
+    benchmark.add_argument(
+        "--linked-bootstrap-replicates",
+        type=int,
+        default=100,
+        help="Bootstrap replicates per simulated linked-marker dataset.",
+    )
     benchmark.add_argument("--snps-per-block", type=int, default=10)
     benchmark.add_argument("--linked-block-bp", type=int, default=100000)
     benchmark.add_argument(
@@ -215,6 +221,16 @@ def main(argv=None) -> int:
             parser.error("--sites must be at least 1.")
         if args.starts < 1:
             parser.error("--starts must be at least 1.")
+        if args.linked_blocks < 2:
+            parser.error("--linked-blocks must be at least 2.")
+        if args.linked_bootstrap_replicates < 2:
+            parser.error("--linked-bootstrap-replicates must be at least 2.")
+        if args.snps_per_block < 1:
+            parser.error("--snps-per-block must be at least 1.")
+        if args.linked_block_bp < args.snps_per_block:
+            parser.error("--linked-block-bp must be at least --snps-per-block.")
+        if args.linkage_concentration <= 0:
+            parser.error("--linkage-concentration must be positive.")
 
         common = dict(
             replicates=args.replicates,
@@ -298,7 +314,7 @@ def main(argv=None) -> int:
                 snps_per_block=args.snps_per_block,
                 block_size_bp=args.linked_block_bp,
                 concentration=args.linkage_concentration,
-                bootstrap_replicates=max(args.replicates, 20),
+                bootstrap_replicates=args.linked_bootstrap_replicates,
                 bootstrap_starts=max(1, min(args.starts, 5)),
                 maxiter=args.maxiter,
                 seed=args.seed,
