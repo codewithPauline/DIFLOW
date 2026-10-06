@@ -8,7 +8,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from diflow.demography import ModelScore, fit_multistart, rank_models
+from diflow.decision import DirectionEvidence, classify_direction
+from diflow.demography import (
+    ModelScore,
+    bootstrap_asymmetric_jsfs,
+    fit_multistart,
+    rank_models,
+)
 from diflow.io import allele_counts_from_vcf, read_popmap
 from diflow.network import build_candidate_pairs
 from diflow.spectra import pairwise_projected_jsfs
@@ -16,8 +22,6 @@ from diflow.spectra import pairwise_projected_jsfs
 
 @dataclass(frozen=True)
 class PipelineResult:
-    """Paths and summary tables produced by an infer workflow."""
-
     candidate_pairs: pd.DataFrame
     pairwise_results: pd.DataFrame
     model_rankings: pd.DataFrame
@@ -45,7 +49,6 @@ def _provisional_direction(
     min_model_weight: float = 0.70,
     min_abs_asymmetry: float = 0.25,
 ) -> tuple[str, str | None, float]:
-    """Return a provisional direction label before jSFS uncertainty is added."""
     total = m_a_to_b + m_b_to_a
     asymmetry = 0.0 if total == 0 else (m_a_to_b - m_b_to_a) / total
 
@@ -76,26 +79,19 @@ def run_infer_pipeline(
     max_distance_km: float | None = None,
     starts: int = 10,
     maxiter: int = 100,
+    bootstrap_replicates: int = 0,
+    bootstrap_starts: int = 5,
     prepare_only: bool = False,
     seed: int | None = None,
 ) -> PipelineResult:
-    """Run the first integrated DIFLOW inference workflow.
-
-    The workflow:
-    1. reads VCF, population assignments and coordinates,
-    2. aggregates population allele counts,
-    3. constructs a sparse geographic candidate graph,
-    4. builds projected pairwise jSFS objects,
-    5. optionally fits competing demographic models with multistart optimization,
-    6. writes transparent intermediate and result tables.
-
-    Direction labels are explicitly provisional until single-time-point jSFS
-    uncertainty calibration is implemented.
-    """
     if projection_chromosomes < 2:
         raise ValueError("projection_chromosomes must be at least 2.")
     if starts < 1:
         raise ValueError("starts must be at least 1.")
+    if bootstrap_replicates not in (0, 1) and bootstrap_replicates < 2:
+        raise ValueError("bootstrap_replicates must be 0 or at least 2.")
+    if bootstrap_starts < 1:
+        raise ValueError("bootstrap_starts must be at least 1.")
 
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -123,9 +119,8 @@ def run_infer_pipeline(
     )
     pairs.to_csv(outdir / "candidate_pairs.csv", index=False)
 
-    pair_rows: list[dict] = []
-    ranking_rows: list[dict] = []
-
+    pair_rows = []
+    ranking_rows = []
     model_names = (
         "isolation",
         "symmetric_migration",
@@ -159,28 +154,14 @@ def run_infer_pipeline(
         }
 
         if projected.loci_used == 0:
-            pair_rows.append(
-                {
-                    **base,
-                    "status": "no_usable_loci",
-                    "best_model": None,
-                    "preferred_direction": None,
-                }
-            )
+            pair_rows.append({**base, "status": "no_usable_loci"})
             continue
 
         if prepare_only:
-            pair_rows.append(
-                {
-                    **base,
-                    "status": "prepared",
-                    "best_model": None,
-                    "preferred_direction": None,
-                }
-            )
+            pair_rows.append({**base, "status": "prepared"})
             continue
 
-        scores: list[ModelScore] = []
+        scores = []
         fits = {}
         observations = int(np.count_nonzero(projected.spectrum))
 
@@ -193,12 +174,11 @@ def run_infer_pipeline(
                 maxiter=maxiter,
             )
             fits[model_name] = result
-            parameter_count = len(result.best_parameters)
             scores.append(
                 ModelScore(
                     name=model_name,
                     log_likelihood=result.best_log_likelihood,
-                    parameters=parameter_count,
+                    parameters=len(result.best_parameters),
                     observations=observations,
                 )
             )
@@ -220,20 +200,67 @@ def run_infer_pipeline(
             stable=asym_fit.stable,
         )
 
-        pair_rows.append(
-            {
-                **base,
-                "status": status,
-                "best_model": best_model,
-                "preferred_direction": preferred,
-                "m_a_to_b_scaled": m_a_to_b,
-                "m_b_to_a_scaled": m_b_to_a,
-                "asymmetry_index": asymmetry,
-                "asymmetric_model_weight": asym_weight,
-                "optimizer_stable": bool(asym_fit.stable),
-                "optimizer_success_fraction": float(asym_fit.converged_fraction),
-            }
-        )
+        row = {
+            **base,
+            "status": status,
+            "best_model": best_model,
+            "preferred_direction": preferred,
+            "m_a_to_b_scaled": m_a_to_b,
+            "m_b_to_a_scaled": m_b_to_a,
+            "asymmetry_index": asymmetry,
+            "asymmetric_model_weight": asym_weight,
+            "optimizer_stable": bool(asym_fit.stable),
+            "optimizer_success_fraction": float(asym_fit.converged_fraction),
+        }
+
+        if bootstrap_replicates >= 2:
+            boot = bootstrap_asymmetric_jsfs(
+                counts,
+                pop_a,
+                pop_b,
+                chromosomes_a=projection_chromosomes,
+                chromosomes_b=projection_chromosomes,
+                replicates=bootstrap_replicates,
+                starts=bootstrap_starts,
+                maxiter=maxiter,
+                seed=None if seed is None else seed + pair_index * 10000,
+            )
+
+            evidence = DirectionEvidence(
+                source=pop_a,
+                destination=pop_b,
+                migration_forward=m_a_to_b,
+                migration_reverse=m_b_to_a,
+                directional_support=boot.preferred_direction_support,
+                asymmetric_model_weight=asym_weight,
+                optimizer_stable=bool(asym_fit.stable),
+                forward_lower=boot.m_a_to_b_lower,
+                forward_upper=boot.m_a_to_b_upper,
+                reverse_lower=boot.m_b_to_a_lower,
+                reverse_upper=boot.m_b_to_a_upper,
+            )
+            decision = classify_direction(
+                evidence,
+                require_interval_separation=True,
+            )
+
+            row.update(
+                {
+                    "status": decision.status,
+                    "preferred_direction": decision.preferred_direction,
+                    "directional_support": boot.preferred_direction_support,
+                    "probability_a_to_b_stronger": boot.probability_a_to_b_stronger,
+                    "m_a_to_b_lower": boot.m_a_to_b_lower,
+                    "m_a_to_b_upper": boot.m_a_to_b_upper,
+                    "m_b_to_a_lower": boot.m_b_to_a_lower,
+                    "m_b_to_a_upper": boot.m_b_to_a_upper,
+                    "bootstrap_successful": boot.successful_replicates,
+                    "bootstrap_attempted": boot.attempted_replicates,
+                    "decision_reason": decision.reason,
+                }
+            )
+
+        pair_rows.append(row)
 
         ranked = ranking.copy()
         ranked.insert(0, "population_b", pop_b)
@@ -254,10 +281,13 @@ def run_infer_pipeline(
                 "max_distance_km": max_distance_km,
                 "starts": starts,
                 "maxiter": maxiter,
+                "bootstrap_replicates": bootstrap_replicates,
+                "bootstrap_starts": bootstrap_starts,
                 "prepare_only": prepare_only,
                 "direction_status_note": (
-                    "candidate/ambiguous/unsupported labels are provisional "
-                    "until jSFS uncertainty calibration is implemented"
+                    "supported/ambiguous/unsupported uses bootstrap uncertainty "
+                    "only when bootstrap_replicates >= 2; otherwise candidate "
+                    "labels remain provisional"
                 ),
             }
         ]
