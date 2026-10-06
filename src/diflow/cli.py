@@ -130,6 +130,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     compare.add_argument("--output", required=True)
     compare.add_argument("--asymmetry-threshold", type=float, default=0.25)
+    compare.add_argument(
+        "--allow-unmatched",
+        action="store_true",
+        help=(
+            "Allow methods with different scenario/replicate keys. "
+            "Not recommended for release-grade comparisons."
+        ),
+    )
 
     calibrate = subparsers.add_parser(
         "calibrate",
@@ -583,6 +591,7 @@ def main(argv=None) -> int:
             methods,
             output_dir=args.output,
             asymmetry_threshold=args.asymmetry_threshold,
+            require_complete_match=not args.allow_unmatched,
         )
         print("DIFLOW method comparison")
         print(f"Methods: {len(methods)}")
