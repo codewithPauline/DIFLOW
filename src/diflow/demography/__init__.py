@@ -27,3 +27,20 @@ __all__ = [
     "JSFSBootstrapResult",
     "bootstrap_asymmetric_jsfs",
 ]
+
+
+from .profile_likelihood import (
+    ProfileLikelihoodResult,
+    confidence_interval_from_profile,
+    profile_asymmetric_migration,
+    profile_grid,
+    write_profile_likelihood,
+)
+
+__all__ += [
+    "ProfileLikelihoodResult",
+    "confidence_interval_from_profile",
+    "profile_asymmetric_migration",
+    "profile_grid",
+    "write_profile_likelihood",
+]
