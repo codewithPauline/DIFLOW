@@ -11,6 +11,7 @@ from diflow.decision import DirectionEvidence, classify_direction
 from diflow.demography import (
     ModelScore,
     bootstrap_asymmetric_jsfs,
+    directional_support_for_estimate,
     fit_multistart,
     rank_models,
 )
@@ -199,10 +200,10 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
             polarized=task.polarized,
         )
 
-        point_direction_support = (
-            boot.probability_a_to_b_stronger
-            if m_a_to_b >= m_b_to_a
-            else 1.0 - boot.probability_a_to_b_stronger
+        point_direction_support = directional_support_for_estimate(
+            boot.probability_a_to_b_stronger,
+            m_a_to_b,
+            m_b_to_a,
         )
 
         evidence = DirectionEvidence(
