@@ -26,6 +26,7 @@
 - [Interactive Report](report.md)
 - [External Method Comparison](comparators.md)
 - [Release Readiness](release_readiness.md)
+- [Validation Campaign](campaign.md)
 
 ## Reproducibility and HPC
 
