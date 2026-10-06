@@ -199,12 +199,18 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
             polarized=task.polarized,
         )
 
+        point_direction_support = (
+            boot.probability_a_to_b_stronger
+            if m_a_to_b >= m_b_to_a
+            else 1.0 - boot.probability_a_to_b_stronger
+        )
+
         evidence = DirectionEvidence(
             source=pop_a,
             destination=pop_b,
             migration_forward=m_a_to_b,
             migration_reverse=m_b_to_a,
-            directional_support=boot.preferred_direction_support,
+            directional_support=point_direction_support,
             asymmetric_model_weight=asym_weight,
             optimizer_stable=bool(asym_fit.stable),
             forward_lower=boot.m_a_to_b_lower,
@@ -224,7 +230,8 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
             {
                 "status": decision.status,
                 "preferred_direction": decision.preferred_direction,
-                "directional_support": boot.preferred_direction_support,
+                "directional_support": point_direction_support,
+                "bootstrap_preferred_direction_support": boot.preferred_direction_support,
                 "probability_a_to_b_stronger": boot.probability_a_to_b_stronger,
                 "m_a_to_b_lower": boot.m_a_to_b_lower,
                 "m_a_to_b_upper": boot.m_a_to_b_upper,
