@@ -216,3 +216,17 @@ def test_threshold_selection_rejects_zero_call_solution():
 
     with pytest.raises(RuntimeError, match="produced at least one directional call"):
         select_thresholds(scan, max_false_directional_positive_rate=0.05)
+
+
+
+def test_missing_preferred_direction_is_rejected():
+    evidence = _evidence()
+    evidence.loc[0, "preferred_direction"] = None
+
+    with pytest.raises(ValueError, match="incomplete evidence rows"):
+        evaluate_thresholds(
+            evidence,
+            min_model_weight=0.7,
+            min_directional_support=0.95,
+            min_abs_asymmetry=0.25,
+        )
