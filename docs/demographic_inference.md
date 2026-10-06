@@ -51,16 +51,19 @@ migration parameters in dadi units. They are not yet automatically converted
 to unscaled migrants per generation because that conversion requires an
 estimate of the ancestral reference population size and mutation rate.
 
-## Current limitations
+## Current model set
 
-The first model assumes continuous migration since the population split.
-DIFLOW will add model comparison against:
+DIFLOW currently compares:
 
 - strict isolation
-- symmetric migration
+- symmetric continuous migration
 - asymmetric continuous migration
-- secondary contact
-- ancient migration
+- asymmetric secondary contact
 
-Directional interpretation should only be emphasized when the asymmetric
-model is supported over simpler alternatives.
+The candidate set is intentionally compact. Additional histories should be
+added when validation identifies a specific source of misspecification rather
+than simply increasing model count.
+
+Directional interpretation should only be emphasized when the asymmetric model
+has sufficient support and uncertainty diagnostics are consistent with a
+directional call.
