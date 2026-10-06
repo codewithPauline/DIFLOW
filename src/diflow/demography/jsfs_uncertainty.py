@@ -27,15 +27,18 @@ class JSFSBootstrapResult:
     preferred_direction_support: float
     successful_replicates: int
     attempted_replicates: int
+    resampling_unit: str
+    blocks_used: int
+    loci_used: int
 
 
-def _locus_contributions(
+def _locus_contribution_records(
     counts: pd.DataFrame,
     population_a: str,
     population_b: str,
     chromosomes_a: int,
     chromosomes_b: int,
-) -> list[np.ndarray]:
+) -> list[tuple[str, int, np.ndarray]]:
     required = {
         "chrom",
         "pos",
@@ -61,7 +64,7 @@ def _locus_contributions(
     if population_a not in alt.columns or population_b not in alt.columns:
         raise ValueError("both requested populations must be represented.")
 
-    contributions: list[np.ndarray] = []
+    records: list[tuple[str, int, np.ndarray]] = []
 
     for idx in alt.index:
         values = (
@@ -81,9 +84,40 @@ def _locus_contributions(
         k_b = np.arange(chromosomes_b + 1)
         p_a = hypergeom.pmf(k_a, n_a, x_a, chromosomes_a)
         p_b = hypergeom.pmf(k_b, n_b, x_b, chromosomes_b)
-        contributions.append(np.outer(p_a, p_b))
+        chrom = str(idx[0])
+        pos = int(idx[1])
+        records.append((chrom, pos, np.outer(p_a, p_b)))
 
-    return contributions
+    return records
+
+
+def _resampling_blocks(
+    records: list[tuple[str, int, np.ndarray]],
+    *,
+    block_size_bp: int | None,
+) -> tuple[list[np.ndarray], str]:
+    """Collapse locus contributions into resampling units.
+
+    Without block_size_bp, every usable locus is sampled independently.
+    With block_size_bp, all usable variants in the same chromosome/window are
+    summed and resampled together.
+    """
+    if block_size_bp is None:
+        return [record[2] for record in records], "locus"
+
+    if block_size_bp < 1:
+        raise ValueError("block_size_bp must be a positive integer.")
+
+    grouped: dict[tuple[str, int], np.ndarray] = {}
+    for chrom, pos, contribution in records:
+        # 1-based VCF positions are assigned to zero-based fixed windows.
+        block_index = (pos - 1) // block_size_bp
+        key = (chrom, block_index)
+        if key not in grouped:
+            grouped[key] = np.zeros_like(contribution, dtype=float)
+        grouped[key] += contribution
+
+    return list(grouped.values()), f"{block_size_bp}-bp genomic block"
 
 
 def bootstrap_asymmetric_jsfs(
@@ -98,13 +132,14 @@ def bootstrap_asymmetric_jsfs(
     maxiter: int = 100,
     confidence: float = 0.95,
     seed: int | None = None,
+    block_size_bp: int | None = None,
     fit_function: Callable | None = None,
 ) -> JSFSBootstrapResult:
-    """Locus-bootstrap asymmetric migration estimates from projected jSFS data.
+    """Bootstrap asymmetric migration estimates from projected jSFS data.
 
-    Loci are sampled with replacement. Each sampled locus contributes its
-    hypergeometrically projected probability mass to a bootstrap jSFS, which is
-    then refit under the asymmetric continuous-migration model.
+    By default, usable loci are resampled independently. When block_size_bp is
+    supplied, all variants within each fixed chromosome/window are resampled as
+    one unit, preserving local linkage within bootstrap blocks.
 
     The default fitter is DIFLOW's multi-start dadi optimizer. fit_function is
     injectable to enable lightweight unit testing and alternative backends.
@@ -117,29 +152,41 @@ def bootstrap_asymmetric_jsfs(
         raise ValueError("confidence must lie strictly between 0 and 1.")
     if chromosomes_a < 1 or chromosomes_b < 1:
         raise ValueError("projection chromosome counts must be positive.")
+    if block_size_bp is not None and block_size_bp < 1:
+        raise ValueError("block_size_bp must be a positive integer.")
 
-    contributions = _locus_contributions(
+    records = _locus_contribution_records(
         counts,
         population_a,
         population_b,
         chromosomes_a,
         chromosomes_b,
     )
-    if len(contributions) < 2:
+    if len(records) < 2:
         raise ValueError("at least two usable loci are required for bootstrap.")
+
+    blocks, resampling_unit = _resampling_blocks(
+        records,
+        block_size_bp=block_size_bp,
+    )
+    if len(blocks) < 2:
+        raise ValueError(
+            "at least two resampling blocks are required; reduce block_size_bp "
+            "or provide more genomic data."
+        )
 
     rng = np.random.default_rng(seed)
     fitter = fit_multistart if fit_function is None else fit_function
     estimates: list[tuple[float, float]] = []
 
     for replicate in range(replicates):
-        sampled = rng.integers(0, len(contributions), size=len(contributions))
+        sampled = rng.integers(0, len(blocks), size=len(blocks))
         spectrum = np.zeros(
             (chromosomes_a + 1, chromosomes_b + 1),
             dtype=float,
         )
         for index in sampled:
-            spectrum += contributions[int(index)]
+            spectrum += blocks[int(index)]
 
         try:
             fit = fitter(
@@ -180,4 +227,7 @@ def bootstrap_asymmetric_jsfs(
         preferred_direction_support=float(preferred_support),
         successful_replicates=len(estimates),
         attempted_replicates=replicates,
+        resampling_unit=resampling_unit,
+        blocks_used=len(blocks),
+        loci_used=len(records),
     )
