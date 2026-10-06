@@ -52,3 +52,12 @@ estimator.
 
 That distinction is a strength: release claims should be earned by the
 simulation results rather than inferred from software completeness.
+
+
+## Reproducible campaign generation
+
+Use `diflow campaign` to generate the major pre-release validation jobs,
+Slurm scripts, submission helper, and machine-readable campaign manifest.
+
+This reduces the risk that release claims depend on undocumented one-off
+simulation commands.
