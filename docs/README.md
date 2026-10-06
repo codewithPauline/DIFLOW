@@ -49,3 +49,5 @@ DIFLOW is under active development. Current directional classifications and deci
 - [Known Limitations](limitations.md) — assumptions, failure regimes, and current scientific boundaries.
 
 - [External Benchmark Protocol](external_benchmark_protocol.md) — matched-truth, estimand-aware comparison rules for established methods.
+
+- [Case Study Protocol](case_study_protocol.md) — release-grade real-data demonstration and reproducibility requirements.
