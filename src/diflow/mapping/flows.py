@@ -8,6 +8,7 @@ import pandas as pd
 
 COORD_COLUMNS = ("population", "latitude", "longitude")
 FLOW_COLUMNS = ("source", "destination", "migration")
+VALID_STATUSES = {"supported", "ambiguous", "unsupported"}
 
 
 def validate_coordinates(coordinates: pd.DataFrame) -> pd.DataFrame:
@@ -34,22 +35,13 @@ def validate_coordinates(coordinates: pd.DataFrame) -> pd.DataFrame:
 
 
 def validate_flows(flows: pd.DataFrame) -> pd.DataFrame:
-    """Validate and normalize source-to-recipient migration edges.
-
-    Required columns:
-    source, destination, migration
-
-    Optional columns:
-    support: probability/confidence-like score in [0, 1]
-    lower: lower uncertainty bound
-    upper: upper uncertainty bound
-    """
+    """Validate and normalize source-to-recipient migration edges."""
     missing = [c for c in FLOW_COLUMNS if c not in flows.columns]
     if missing:
         raise ValueError(f"flows missing required columns: {missing}")
 
     keep = list(FLOW_COLUMNS)
-    for optional in ("support", "lower", "upper"):
+    for optional in ("support", "lower", "upper", "status"):
         if optional in flows.columns:
             keep.append(optional)
 
@@ -75,5 +67,13 @@ def validate_flows(flows: pd.DataFrame) -> pd.DataFrame:
     if {"lower", "upper"}.issubset(frame.columns):
         if (frame["lower"] > frame["upper"]).any():
             raise ValueError("lower uncertainty bound cannot exceed upper.")
+
+    if "status" in frame.columns:
+        invalid = sorted(set(frame["status"].dropna()) - VALID_STATUSES)
+        if invalid:
+            raise ValueError(
+                "status values must be supported, ambiguous, or unsupported; "
+                f"invalid values: {invalid}"
+            )
 
     return frame
