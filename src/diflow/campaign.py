@@ -109,6 +109,10 @@ def write_validation_campaign(
                 f"{executable} release-review "
                 f"--results {shlex.quote(str(results))}"
             ),
+            "archive_validation": (
+                f"{executable} archive-validation "
+                f"--results {shlex.quote(str(results))}"
+            ),
             "release_review": [
                 "Review recovery-grid direction accuracy and bias.",
                 "Confirm symmetric false-direction rates meet the target.",
