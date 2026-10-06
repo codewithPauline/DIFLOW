@@ -117,22 +117,32 @@ __all__ += [
 
 from .mechanistic_linkage import (
     MechanisticLinkageScenario,
+    MechanisticGridConfig,
     default_mechanistic_linkage_scenarios,
     plot_mechanistic_linkage,
     run_mechanistic_linkage_calibration,
     simulate_msprime_counts,
     summarize_mechanistic_linkage,
     write_mechanistic_linkage_calibration,
+    default_mechanistic_grid,
+    run_mechanistic_linkage_grid,
+    plot_mechanistic_linkage_grid,
+    write_mechanistic_linkage_grid,
 )
 
 __all__ += [
     "MechanisticLinkageScenario",
+    "MechanisticGridConfig",
     "default_mechanistic_linkage_scenarios",
     "plot_mechanistic_linkage",
     "run_mechanistic_linkage_calibration",
     "simulate_msprime_counts",
     "summarize_mechanistic_linkage",
     "write_mechanistic_linkage_calibration",
+    "default_mechanistic_grid",
+    "run_mechanistic_linkage_grid",
+    "plot_mechanistic_linkage_grid",
+    "write_mechanistic_linkage_grid",
 ]
 
 
