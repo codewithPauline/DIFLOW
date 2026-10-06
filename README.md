@@ -2,120 +2,269 @@
 
 **Directional Inference and Geographic Visualization of Gene Flow**
 
-DIFLOW is an open-source population-genomics project being developed to estimate **directional migration between populations**, quantify the **magnitude and asymmetry of gene flow**, and visualize supported migration pathways on geographic maps.
+DIFLOW is an open-source population-genomics framework for estimating asymmetric migration, comparing alternative demographic explanations, quantifying uncertainty in direction and magnitude, and mapping only those directional relationships that are supported by explicit evidence.
 
-> **Project status:** early research development. The statistical estimator is under active development and must be validated by simulation before biological interpretation.
+> **Project status:** active research development. DIFLOW is not yet a validated release. Simulation benchmarking and calibration remain required before biological conclusions should be based on its directional classifications.
 
-## Why DIFLOW?
+## What DIFLOW is — and is not
 
-Spatial population-genetic methods are powerful, but direction, magnitude, uncertainty, and geographic visualization are often handled by separate tools or are not estimated in the same framework. DIFLOW is being designed around the quantities researchers usually want to interpret directly:
+DIFLOW uses the **joint site-frequency spectrum (jSFS)** as an established statistical substrate for demographic inference. The jSFS itself is not the novelty of DIFLOW.
 
-- \(m_{i\rightarrow j}\): migration from population *i* into population *j*
-- \(m_{j\rightarrow i}\): migration in the reverse direction
-- uncertainty around each estimate
-- strength of directional asymmetry
-- spatial location of the inferred movement
-
-The goal is not simply to draw arrows between genetically similar populations. The goal is to build a validated inference framework in which every mapped arrow corresponds to an estimated migration parameter and carries explicit uncertainty.
-
-## Core design
+The contribution DIFLOW is being designed around is the full evidence architecture:
 
 ```text
-Genomic data + population assignments + coordinates
-                         |
-                         v
-                population summaries
-                         |
-                         v
-              directional inference
-                /              \
-         m(i -> j)          m(j -> i)
-                \              /
-                 v            v
-                 asymmetry + uncertainty
-                         |
-                         v
-               directed migration graph
-                         |
-                         v
-              geographic gene-flow map
+VCF genotypes
+    ↓
+population allele counts
+    ↓
+projected pairwise jSFS
+    ↓
+competing demographic models
+    ↓
+multi-start optimization
+    ↓
+model comparison
+    ↓
+m(A→B) and m(B→A)
+    ↓
+bootstrap uncertainty
+    ↓
+direction-support decision
+    ↓
+directed population network
+    ↓
+geographic migration map
 ```
 
-## Development roadmap
+DIFLOW does **not** infer migration direction directly from FST, ADMIXTURE coefficients, genetic distance, or visual ancestry patterns.
 
-### Phase 1 — mathematical and simulation foundation
-- [x] Repository scaffold
-- [x] Directional migration parameter conventions
-- [x] Two-population forward migration simulator
-- [x] Asymmetry utilities
-- [ ] Two-population estimator
-- [ ] Block/bootstrap uncertainty
-- [ ] Recovery tests against known migration rates
+## Scientific question
 
-### Phase 2 — genomic inference
-- [ ] Allele-count and SFS input layer
-- [ ] Joint-SFS likelihood
-- [ ] Unequal effective population sizes
-- [ ] Divergence and secondary-contact models
-- [ ] Model comparison and diagnostics
+For two populations A and B, DIFLOW asks whether the genomic data support:
 
-### Phase 3 — spatial networks
-- [ ] Multi-population graph construction
-- [ ] Sparse migration parameterization
-- [ ] Spatial regularization
-- [ ] Source/sink and migration-hub summaries
+- isolation,
+- approximately symmetric migration,
+- asymmetric migration,
+- or an alternative history such as secondary contact.
 
-### Phase 4 — geographic visualization
-- [ ] Directional arrows
-- [ ] Arrow width scaled by migration magnitude
-- [ ] Support/uncertainty encoding
-- [ ] Publication-quality PDF/SVG output
-- [ ] Interactive exploration
+When asymmetry is supported, DIFLOW estimates both directional parameters:
 
-### Phase 5 — validation
-- [ ] Symmetric migration
-- [ ] Strongly asymmetric migration
-- [ ] Stepping-stone systems
-- [ ] Range expansion
-- [ ] Population-size asymmetry
-- [ ] Secondary contact
-- [ ] Ghost populations
-- [ ] Missing populations and uneven sampling
-- [ ] Benchmark bias, RMSE, interval coverage and direction accuracy
+[
+m_{Aightarrow B}
+]
+
+and
+
+[
+m_{Bightarrow A}.
+]
+
+Directional asymmetry is summarized as
+
+[
+A_{AB} =
+rac{m_{Aightarrow B}-m_{Bightarrow A}}
+     {m_{Aightarrow B}+m_{Bightarrow A}},
+]
+
+when at least one rate is non-zero.
+
+## Current capabilities
+
+DIFLOW currently includes:
+
+- VCF + population-map input
+- population allele-count construction
+- projected pairwise jSFS construction
+- explicit forward-time source→recipient migration convention
+- isolation, symmetric-migration, asymmetric-migration, and asymmetric secondary-contact candidate models
+- dadi-backed demographic inference
+- AIC/AICc utilities and Akaike weights
+- multi-start optimization
+- convergence and stability diagnostics
+- locus-bootstrap uncertainty for pairwise jSFS inference
+- directional support probabilities
+- supported / ambiguous / unsupported evidence classification
+- sparse geographic candidate-pair construction
+- directed migration networks
+- source-like / sink-like network summaries
+- directional map rendering
+- an end-to-end `diflow infer` command
+- simulation-validation metrics and canonical stress-test scenarios
+
+## Command-line workflow
+
+Prepare genomic inputs and spectra without fitting demographic models:
+
+```bash
+diflow infer \
+  --vcf data.vcf \
+  --popmap populations.tsv \
+  --coords coordinates.csv \
+  --projection-chromosomes 8 \
+  --neighbors 4 \
+  --output results/ \
+  --prepare-only
+```
+
+Run demographic inference with locus-bootstrap uncertainty:
+
+```bash
+diflow infer \
+  --vcf data.vcf \
+  --popmap populations.tsv \
+  --coords coordinates.csv \
+  --projection-chromosomes 8 \
+  --neighbors 4 \
+  --starts 20 \
+  --bootstrap-replicates 100 \
+  --bootstrap-starts 5 \
+  --output results/
+```
+
+Bootstrap demographic inference is computationally expensive because each replicate refits an asymmetric demographic model.
+
+## Directional evidence
+
+A large fitted migration rate is not automatically treated as a supported arrow.
+
+The decision layer can combine:
+
+- support for the asymmetric demographic model,
+- optimizer stability,
+- directional asymmetry,
+- bootstrap support,
+- uncertainty-interval separation.
+
+The current decision thresholds are development defaults and must be calibrated by simulation.
+
+## Multi-population scaling
+
+For (n) populations, unrestricted pairwise comparison requires
+
+[
+rac{n(n-1)}{2}
+]
+
+population pairs.
+
+DIFLOW therefore supports sparse candidate graphs based on geographic distance and k-nearest neighbors. Future versions will add biologically informed adjacency such as watersheds, habitat connectivity, resistance surfaces, and user-supplied graphs.
+
+## Validation is the core product requirement
+
+The most important question for DIFLOW is not whether it can return two migration parameters.
+
+It is whether it can recover direction and magnitude under known truth **without producing false directional conclusions under symmetry or demographic misspecification**.
+
+The validation suite is being built around:
+
+- symmetric migration
+- A→B and B→A asymmetry
+- near-unidirectional migration
+- zero migration
+- unequal effective population sizes
+- bottlenecks and growth
+- secondary contact
+- ancient migration
+- range expansion
+- ghost populations
+- uneven sampling and missingness
+- linked loci
+
+Primary metrics include:
+
+- parameter bias
+- RMSE
+- confidence-interval coverage
+- direction accuracy
+- false directional-positive rate
+- model-selection accuracy
+- runtime and memory scaling
+
+See [docs/benchmarking.md](docs/benchmarking.md).
 
 ## Migration convention
 
-DIFLOW uses **forward-time source-to-recipient notation**:
+DIFLOW uses forward-time source-to-recipient notation:
 
 ```text
-m_A_to_B = proportion of population B replaced by migrants from A per generation
-m_B_to_A = proportion of population A replaced by migrants from B per generation
+m_A_to_B = migration from population A into population B
+m_B_to_A = migration from population B into population A
 ```
 
-For a pair of populations, directional asymmetry can be summarized as
-
-```text
-A_ij = (m_ij - m_ji) / (m_ij + m_ji)
-```
-
-which ranges from -1 to +1 when at least one rate is non-zero.
+Backend-specific parameter ordering is translated internally and tested explicitly.
 
 ## Repository layout
 
 ```text
 DIFLOW/
 ├── src/diflow/
-│   ├── core/          # parameter conventions and summary statistics
-│   └── simulation/    # validation simulators
+│   ├── core/          # asymmetry and parameter conventions
+│   ├── io/            # VCF and population-map input
+│   ├── spectra/       # jSFS construction and projection
+│   ├── demography/    # demographic models, fitting, uncertainty
+│   ├── decision/      # evidence-based direction classification
+│   ├── network/       # sparse pair graphs and directed summaries
+│   ├── mapping/       # geographic directional visualization
+│   ├── pipeline/      # end-to-end orchestration
+│   ├── simulation/    # controlled simulation utilities
+│   └── validation/    # benchmark scenarios and metrics
 ├── tests/
+├── docs/
 ├── pyproject.toml
 ├── LICENSE
 └── README.md
 ```
 
-## Scientific principle
+## Development roadmap
 
-A visually compelling directional map is not enough. DIFLOW will not treat a direction as biologically supported until the estimator can recover known migration direction and magnitude across controlled simulations and report its uncertainty.
+### Statistical foundation
+- [x] Forward-time migration convention
+- [x] Asymmetry summaries
+- [x] Two-population controlled simulator
+- [x] jSFS construction and projection
+- [x] dadi demographic backend
+- [x] Competing migration models
+- [x] Multi-start optimization
+- [x] Model comparison
+- [x] Locus-bootstrap uncertainty
+- [ ] Block-bootstrap uncertainty
+- [ ] Profile-likelihood diagnostics
+- [ ] Folded/unfolded polarization safeguards
+
+### Spatial inference and reporting
+- [x] Geographic candidate-pair graphs
+- [x] Directed migration networks
+- [x] Source-like / sink-like summaries
+- [x] Directional map rendering
+- [x] End-to-end CLI
+- [ ] Projected publication cartography
+- [ ] Parallel/HPC execution
+- [ ] Interactive exploration
+
+### Validation
+- [x] Validation metric framework
+- [x] Canonical benchmark scenario registry
+- [ ] Large simulation recovery study
+- [ ] False-positive calibration under symmetry
+- [ ] Secondary-contact discrimination
+- [ ] Range-expansion stress test
+- [ ] Ghost-population stress test
+- [ ] Linked-locus/block-bootstrap validation
+- [ ] Benchmark against established methods
+
+## Scientific guardrails
+
+DIFLOW separates four distinct concepts:
+
+1. **genetic differentiation** — e.g. FST,
+2. **descriptive allele-frequency structure**,
+3. **model-based migration parameters**,
+4. **evidence for directional asymmetry**.
+
+These quantities should not be treated as interchangeable.
+
+A visually compelling directional map is not enough. Every strong arrow must trace back to a fitted demographic parameter, uncertainty estimate, model-comparison result, and explicit evidence classification.
 
 ## Installation
 
@@ -125,6 +274,12 @@ Development installation:
 git clone https://github.com/codewithPauline/DIFLOW.git
 cd DIFLOW
 python -m pip install -e ".[dev]"
+```
+
+Install the demographic backend:
+
+```bash
+python -m pip install -e ".[dev,demography]"
 ```
 
 Run tests:
