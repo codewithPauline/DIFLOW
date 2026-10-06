@@ -63,3 +63,28 @@ def test_core_scenarios_cover_major_confounders():
 def test_interval_coverage_rejects_nonfinite_bounds(truth, lower, upper):
     with pytest.raises(ValueError, match="finite"):
         interval_coverage(truth, lower, upper)
+
+
+
+@pytest.mark.parametrize(
+    "true_ab,true_ba,est_ab,est_ba",
+    [
+        ([1.0], [0.5], [float("nan")], [0.4]),
+        ([1.0], [0.5], [0.8], [float("inf")]),
+        ([float("nan")], [0.5], [0.8], [0.4]),
+    ],
+)
+def test_direction_accuracy_rejects_nonfinite_values(
+    true_ab,
+    true_ba,
+    est_ab,
+    est_ba,
+):
+    with pytest.raises(ValueError, match="finite"):
+        direction_accuracy(true_ab, true_ba, est_ab, est_ba)
+
+
+@pytest.mark.parametrize("tolerance", [-0.1, float("nan"), float("inf")])
+def test_direction_accuracy_rejects_invalid_tolerance(tolerance):
+    with pytest.raises(ValueError, match="tolerance"):
+        direction_accuracy([1.0], [0.5], [0.9], [0.4], tolerance=tolerance)
