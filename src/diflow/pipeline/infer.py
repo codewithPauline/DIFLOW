@@ -86,6 +86,7 @@ def run_infer_pipeline(
     min_model_weight: float = 0.70,
     min_directional_support: float = 0.95,
     min_abs_asymmetry: float = 0.25,
+    polarized: bool = False,
     prepare_only: bool = False,
     seed: int | None = None,
 ) -> PipelineResult:
@@ -186,6 +187,7 @@ def run_infer_pipeline(
                 starts=starts,
                 seed=None if seed is None else seed + pair_index * 100 + model_offset,
                 maxiter=maxiter,
+                polarized=polarized,
             )
             fits[model_name] = result
             scores.append(
@@ -241,6 +243,7 @@ def run_infer_pipeline(
                 maxiter=maxiter,
                 seed=None if seed is None else seed + pair_index * 10000,
                 block_size_bp=bootstrap_block_bp,
+                polarized=polarized,
             )
 
             evidence = DirectionEvidence(
@@ -321,6 +324,12 @@ def run_infer_pipeline(
                 "min_model_weight": min_model_weight,
                 "min_directional_support": min_directional_support,
                 "min_abs_asymmetry": min_abs_asymmetry,
+                "polarized": polarized,
+                "spectrum_orientation": (
+                    "polarized/unfolded (ALT asserted derived)"
+                    if polarized
+                    else "unpolarized/folded"
+                ),
                 "prepare_only": prepare_only,
                 "direction_status_note": (
                     "supported/ambiguous/unsupported uses bootstrap uncertainty "
