@@ -98,3 +98,66 @@ Before a validated release, DIFLOW should demonstrate:
 
 Where those conditions are not met, DIFLOW should report uncertainty or
 ambiguity rather than force a directional conclusion.
+
+
+## Current executable benchmark
+
+DIFLOW now includes a first model-consistent parameter-recovery benchmark:
+
+    diflow benchmark \
+      --output benchmark_results/ \
+      --replicates 10 \
+      --chromosomes 20 \
+      --sites 5000 \
+      --starts 10 \
+      --maxiter 100 \
+      --seed 42
+
+The benchmark generates finite-SNP jSFS replicates under known asymmetric
+continuous-migration parameters and refits those spectra through DIFLOW's
+unpolarized/folded inference path.
+
+Current default truths include:
+
+- symmetric migration
+- moderate A -> B asymmetry
+- moderate B -> A asymmetry
+- strong A -> B asymmetry
+- strong B -> A asymmetry
+
+Outputs:
+
+- recovery_replicates.csv
+- recovery_summary.csv
+
+The summary reports:
+
+- optimization success rate
+- bias in m(A -> B)
+- RMSE in m(A -> B)
+- bias in m(B -> A)
+- RMSE in m(B -> A)
+- direction accuracy
+- false directional-positive rate under symmetric truth
+- optimizer-stability rate
+
+### What this benchmark proves
+
+It tests numerical recovery and identifiability when the generating demographic
+model matches the fitted model.
+
+### What it does not prove
+
+It does not establish robustness to:
+
+- secondary contact when a continuous-migration model is fit
+- population-size changes
+- range expansion
+- ghost populations
+- linked loci
+- ascertainment
+- incorrect population assignment
+- geographic graph misspecification
+- other real-data violations
+
+Those stress tests remain required before a validated release.
