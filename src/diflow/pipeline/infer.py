@@ -18,6 +18,7 @@ from diflow.demography import (
 from diflow.io import allele_counts_from_vcf, read_popmap
 from diflow.network import build_candidate_pairs
 from diflow.spectra import pairwise_projected_jsfs
+from .outputs import write_network_outputs
 
 
 @dataclass(frozen=True)
@@ -272,6 +273,13 @@ def run_infer_pipeline(
 
     pairwise.to_csv(outdir / "pairwise_results.csv", index=False)
     rankings.to_csv(outdir / "model_rankings.csv", index=False)
+
+    if bootstrap_replicates >= 2 and not prepare_only:
+        write_network_outputs(
+            pairwise=pairwise,
+            coordinates=coordinates,
+            output_dir=outdir,
+        )
 
     metadata = pd.DataFrame(
         [
