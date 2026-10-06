@@ -67,14 +67,24 @@ def _validate_evidence_table(frame: pd.DataFrame) -> pd.DataFrame:
         "asymmetry_index",
     ):
         clean[column] = pd.to_numeric(clean[column], errors="coerce")
-    clean = clean.dropna(
-        subset=[
-            "truth_direction",
-            "asymmetric_model_weight",
-            "directional_support",
-            "asymmetry_index",
-        ]
-    )
+
+    required_values = [
+        "truth_direction",
+        "asymmetric_model_weight",
+        "directional_support",
+        "asymmetry_index",
+        "optimizer_stable",
+        "interval_separated",
+    ]
+    incomplete = clean[required_values].isna().any(axis=1)
+    if incomplete.any():
+        examples = clean.index[incomplete].tolist()[:5]
+        raise ValueError(
+            "calibration table contains incomplete evidence rows; "
+            f"row examples={examples}. Failed or incomplete benchmark "
+            "replicates must not be silently discarded."
+        )
+
     clean["optimizer_stable"] = _coerce_bool_series(
         clean["optimizer_stable"],
         name="optimizer_stable",
