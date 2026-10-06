@@ -146,3 +146,38 @@ def test_invalid_preferred_direction_is_rejected():
             min_directional_support=0.95,
             min_abs_asymmetry=0.25,
         )
+
+
+
+@pytest.mark.parametrize(
+    "kwargs,error_match",
+    [
+        (
+            {
+                "min_model_weight": float("nan"),
+                "min_directional_support": 0.95,
+                "min_abs_asymmetry": 0.25,
+            },
+            "min_model_weight",
+        ),
+        (
+            {
+                "min_model_weight": 0.7,
+                "min_directional_support": 1.1,
+                "min_abs_asymmetry": 0.25,
+            },
+            "min_directional_support",
+        ),
+        (
+            {
+                "min_model_weight": 0.7,
+                "min_directional_support": 0.95,
+                "min_abs_asymmetry": -0.1,
+            },
+            "min_abs_asymmetry",
+        ),
+    ],
+)
+def test_evaluate_thresholds_rejects_invalid_thresholds(kwargs, error_match):
+    with pytest.raises(ValueError, match=error_match):
+        evaluate_thresholds(_evidence(), **kwargs)
