@@ -484,6 +484,22 @@ diflow slurm \
 
 See [docs/hpc.md](docs/hpc.md).
 
+## Validation campaign
+
+Generate reproducible Slurm jobs for the major pre-release simulation studies:
+
+```bash
+diflow campaign \
+  --output validation_campaign/ \
+  --replicates 50 \
+  --bootstrap-replicates 100 \
+  --cpus 8 \
+  --mem-gb 64 \
+  --hours 72
+```
+
+See [docs/campaign.md](docs/campaign.md).
+
 ## Release readiness
 
 The software infrastructure is now broad, but final scientific validation still
