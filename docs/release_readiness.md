@@ -85,3 +85,25 @@ constants.
 The review fails when a required empirical output is missing. A passing software
 test suite therefore cannot be mistaken for a completed scientific validation
 campaign.
+
+
+## Final release sequence
+
+A validated release should follow this order:
+
+1. Run the release-grade validation campaign.
+2. Calibrate directional thresholds from known truth.
+3. Derive empirical minimum-data guidance from the recovery grid.
+4. Execute and standardize the established-method benchmark.
+5. Run at least one real-data case study as a workflow demonstration.
+6. Run `diflow release-review` and resolve every blocker.
+7. Freeze the exact validation evidence with:
+
+       diflow archive-validation --results validation_campaign/results/
+
+8. Rerun the complete CI/test matrix on the release candidate.
+9. Tag the release, archive the code/results, and create the formal DOI only
+   after the empirical evidence supports the release claims.
+
+The validation archive writes SHA-256 manifests so the evidence used to justify
+release defaults can be independently verified.
