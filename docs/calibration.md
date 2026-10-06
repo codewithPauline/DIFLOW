@@ -65,6 +65,22 @@ The selected values can then be supplied to inference:
 The values above are only an example. Use values supported by the calibration
 study for the intended data regime.
 
+To avoid manually copying calibrated values, inference can consume the selected
+threshold file directly:
+
+    diflow infer \
+      --vcf data.vcf.gz \
+      --popmap populations.tsv \
+      --coords coordinates.csv \
+      --projection-chromosomes 8 \
+      --thresholds-file calibrated_thresholds/selected_thresholds.csv \
+      --output results/
+
+Explicit `--min-model-weight`, `--min-directional-support`, or
+`--min-abs-asymmetry` flags override the corresponding value from the file.
+
+The threshold-file path is recorded in run provenance.
+
 ## Release policy
 
 DIFLOW currently provides the calibration machinery, but final release defaults
