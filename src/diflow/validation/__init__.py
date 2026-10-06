@@ -165,3 +165,16 @@ __all__ += [
     "simulate_counts_from_expected_spectrum",
     "write_decision_evidence_benchmark",
 ]
+
+
+from .comparators import (
+    compare_method_files,
+    summarize_method_comparison,
+    validate_comparator_table,
+)
+
+__all__ += [
+    "compare_method_files",
+    "summarize_method_comparison",
+    "validate_comparator_table",
+]
