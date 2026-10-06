@@ -49,15 +49,15 @@ def generate_starting_points(
     rng = np.random.default_rng(seed)
     points: list[list[float]] = []
 
-    # Always include the canonical starting point first.
     points.append([float(x) for x in spec["initial"]])
 
     for _ in range(starts - 1):
-        point = [
-            _random_log_uniform(rng, lo, hi)
-            for lo, hi in zip(spec["lower"], spec["upper"])
-        ]
-        points.append(point)
+        points.append(
+            [
+                _random_log_uniform(rng, lo, hi)
+                for lo, hi in zip(spec["lower"], spec["upper"])
+            ]
+        )
     return points
 
 
@@ -84,14 +84,8 @@ def fit_multistart(
 ) -> MultiStartResult:
     """Fit one demographic model from multiple starting points.
 
-    Stability is assessed among near-best runs:
-    - keep the best top_fraction of successful runs,
-    - require their log-likelihoods to lie within ll_tolerance of the best,
-    - require each fitted parameter's relative spread to be below
-      parameter_spread_tolerance.
-
-    These thresholds are transparent heuristics for the development phase and
-    will be calibrated through simulation.
+    Each start is passed explicitly to the fitter. No shared model state is
+    mutated, so this design is safe to parallelize later.
     """
     if model_name not in MODEL_SPECS:
         raise ValueError(f"unknown demographic model: {model_name}")
@@ -104,37 +98,33 @@ def fit_multistart(
 
     spec = MODEL_SPECS[model_name]
     points = generate_starting_points(model_name, starts=starts, seed=seed)
-    original_initial = list(spec["initial"])
 
     rows: list[dict] = []
 
-    try:
-        for run_id, point in enumerate(points, start=1):
-            spec["initial"] = point
-            try:
-                fit = _fit_candidate(
-                    observed_spectrum,
-                    model_name,
-                    grid_points=grid_points,
-                    maxiter=maxiter,
-                )
-                row = {
-                    "run": run_id,
-                    "success": True,
-                    "log_likelihood": fit.log_likelihood,
-                    **fit.parameters,
-                }
-            except Exception:
-                row = {
-                    "run": run_id,
-                    "success": False,
-                    "log_likelihood": -math.inf,
-                }
-                for name in spec["names"]:
-                    row[name] = np.nan
-            rows.append(row)
-    finally:
-        spec["initial"] = original_initial
+    for run_id, point in enumerate(points, start=1):
+        try:
+            fit = _fit_candidate(
+                observed_spectrum,
+                model_name,
+                initial=point,
+                grid_points=grid_points,
+                maxiter=maxiter,
+            )
+            row = {
+                "run": run_id,
+                "success": True,
+                "log_likelihood": fit.log_likelihood,
+                **fit.parameters,
+            }
+        except Exception:
+            row = {
+                "run": run_id,
+                "success": False,
+                "log_likelihood": -math.inf,
+            }
+            for name in spec["names"]:
+                row[name] = np.nan
+        rows.append(row)
 
     frame = pd.DataFrame(rows)
     successful = frame[frame["success"]].copy()
