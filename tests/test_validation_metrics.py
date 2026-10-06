@@ -88,3 +88,26 @@ def test_direction_accuracy_rejects_nonfinite_values(
 def test_direction_accuracy_rejects_invalid_tolerance(tolerance):
     with pytest.raises(ValueError, match="tolerance"):
         direction_accuracy([1.0], [0.5], [0.9], [0.4], tolerance=tolerance)
+
+
+
+@pytest.mark.parametrize(
+    "estimated_ab,estimated_ba,error_match",
+    [
+        ([float("nan")], [1.0], "finite"),
+        ([1.0], [float("inf")], "finite"),
+        ([-0.1], [1.0], "non-negative"),
+        ([1.0], [-0.1], "non-negative"),
+    ],
+)
+def test_false_direction_rate_rejects_invalid_estimates(
+    estimated_ab,
+    estimated_ba,
+    error_match,
+):
+    with pytest.raises(ValueError, match=error_match):
+        false_directional_positive_rate(
+            estimated_ab,
+            estimated_ba,
+            asymmetry_threshold=0.25,
+        )
