@@ -97,7 +97,7 @@ The evidence layer may incorporate:
 - bootstrap directional support
 - uncertainty-interval separation
 
-Thresholds are development defaults until calibrated by simulation.
+Thresholds remain development defaults until a broad calibration study is run. DIFLOW now includes an end-to-end decision-evidence benchmark and threshold scanner that can select cutoffs under a user-specified false-direction target.
 
 ## Validation targets
 
@@ -148,3 +148,13 @@ pattern.
 
 Directional arrows must be traceable to an explicit migration parameter,
 model-comparison evidence, and quantified uncertainty.
+
+
+## Identifiability diagnostics
+
+DIFLOW supports one-dimensional profile likelihoods for m_A_to_B and m_B_to_A.
+At each fixed migration value, nuisance parameters are reoptimized. Broad
+profiles indicate weak identifiability even when a point estimate exists.
+
+Profile likelihood is complementary to bootstrap uncertainty and does not
+replace simulation calibration.
