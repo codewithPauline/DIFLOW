@@ -293,6 +293,19 @@ def summarize_recovery(
 
         true_ab = successful["true_m_a_to_b"].to_numpy(float)
         true_ba = successful["true_m_b_to_a"].to_numpy(float)
+
+        for column in ("estimated_m_a_to_b", "estimated_m_b_to_a"):
+            values = pd.to_numeric(successful[column], errors="coerce")
+            if values.isna().any() or (~np.isfinite(values)).any():
+                raise ValueError(
+                    f"{column} for successful fits must be finite."
+                )
+            if (values < 0).any():
+                raise ValueError(
+                    f"{column} for successful fits must be non-negative."
+                )
+            successful[column] = values
+
         est_ab = successful["estimated_m_a_to_b"].to_numpy(float)
         est_ba = successful["estimated_m_b_to_a"].to_numpy(float)
 
