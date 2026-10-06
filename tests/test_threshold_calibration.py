@@ -101,3 +101,33 @@ def test_load_calibrated_thresholds_rejects_multiple_rows(tmp_path):
 
     with pytest.raises(ValueError, match="exactly one"):
         load_calibrated_thresholds(path)
+
+
+
+def test_string_false_is_not_treated_as_true():
+    evidence = _evidence()
+    evidence["optimizer_stable"] = ["False", "True", "True", "True", "True", "True"]
+
+    metrics = evaluate_thresholds(
+        evidence,
+        min_model_weight=0.7,
+        min_directional_support=0.95,
+        min_abs_asymmetry=0.25,
+    )
+
+    # The first symmetric row would be a false positive if "False" were
+    # incorrectly coerced with bool("False") == True.
+    assert metrics["false_directional_positive_rate"] == pytest.approx(0.0)
+
+
+def test_invalid_boolean_text_is_rejected():
+    evidence = _evidence()
+    evidence.loc[0, "interval_separated"] = "maybe"
+
+    with pytest.raises(ValueError, match="interval_separated"):
+        evaluate_thresholds(
+            evidence,
+            min_model_weight=0.7,
+            min_directional_support=0.95,
+            min_abs_asymmetry=0.25,
+        )
