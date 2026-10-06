@@ -88,7 +88,7 @@ DIFLOW currently includes:
 - sparse geographic candidate-pair construction
 - directed migration networks
 - source-like / sink-like network summaries
-- directional map rendering with optional projected CRS with optional projected CRS
+- directional map rendering with optional projected CRS
 - an end-to-end `diflow infer` command
 - simulation-validation metrics and canonical stress-test scenarios
 - simulation-driven directional threshold calibration
@@ -109,6 +109,7 @@ Key user documentation:
 - [Inspection Workflow](docs/inspection_workflow.md) — understand projection and graph recommendations.
 - [Command-line Reference](docs/cli.md) — use `diflow inspect` and `diflow infer`.
 - [Understanding Outputs](docs/outputs.md) — interpret result tables, network summaries, and maps.
+- [Known Limitations](docs/limitations.md) — failure regimes, assumptions, and current release boundaries.
 - [Full Documentation Index](docs/README.md) — statistical methods, uncertainty, mapping, and validation.
 
 Typical first step:
