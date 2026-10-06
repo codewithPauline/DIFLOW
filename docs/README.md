@@ -5,7 +5,7 @@
 - [Getting Started](getting_started.md) — install, inspect, run, and interpret.
 - [Input Files](input_files.md) — exact VCF, population-map, and coordinate formats.
 - [Inspection Workflow](inspection_workflow.md) — recommendations and presets.
-- [Command-line Reference](cli.md) — inspect, infer, benchmark, calibrate, profile, and Slurm commands.
+- [Command-line Reference](cli.md) — inspect, infer, benchmark, calibrate, profile, Slurm, report, and compare commands.
 - [Understanding Outputs](outputs.md) — result files and interpretation order.
 
 ## Statistical methods
@@ -21,10 +21,17 @@
 - [Profile Likelihood](profile_likelihood.md)
 - [Decision Calibration](calibration.md)
 
+## Reporting and comparison
+
+- [Interactive Report](report.md)
+- [External Method Comparison](comparators.md)
+- [Release Readiness](release_readiness.md)
+
 ## Reproducibility and HPC
 
 - [Reproducibility and Provenance](reproducibility.md)
 - [HPC and Slurm](hpc.md)
+- [Pair-level Parallel Execution](parallel.md)
 
 ## Networks and mapping
 
