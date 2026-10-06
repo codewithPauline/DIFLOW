@@ -147,6 +147,30 @@ diflow infer \
 
 Bootstrap demographic inference is computationally expensive because each replicate refits an asymmetric demographic model.
 
+## Known-truth benchmark
+
+DIFLOW includes an executable first-stage recovery benchmark:
+
+```bash
+diflow benchmark \
+  --output benchmark_results/ \
+  --replicates 10 \
+  --chromosomes 20 \
+  --sites 5000 \
+  --starts 10
+```
+
+It simulates jSFS datasets under known symmetric and asymmetric migration
+parameters, refits them through the same folded-data inference path, and reports
+bias, RMSE, direction accuracy, optimization success, and the false
+directional-positive rate under symmetric migration.
+
+This is a **model-consistent recovery benchmark**, not complete biological
+validation. Demographic misspecification and other stress tests remain part of
+the validation roadmap.
+
+See [docs/benchmarking.md](docs/benchmarking.md).
+
 ## Directional evidence
 
 A large fitted migration rate is not automatically treated as a supported arrow.
