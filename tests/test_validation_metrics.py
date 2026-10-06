@@ -49,3 +49,17 @@ def test_core_scenarios_cover_major_confounders():
     assert "secondary_contact" in names
     assert "range_expansion" in names
     assert "ghost_population" in names
+
+
+
+@pytest.mark.parametrize(
+    "truth,lower,upper",
+    [
+        ([1.0, 2.0], [0.5, float("nan")], [1.5, 2.5]),
+        ([1.0, 2.0], [0.5, 1.5], [1.5, float("inf")]),
+        ([1.0, float("nan")], [0.5, 1.5], [1.5, 2.5]),
+    ],
+)
+def test_interval_coverage_rejects_nonfinite_bounds(truth, lower, upper):
+    with pytest.raises(ValueError, match="finite"):
+        interval_coverage(truth, lower, upper)
