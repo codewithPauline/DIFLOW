@@ -69,3 +69,9 @@ DIFLOW should not silently choose biologically important graph assumptions.
 
 The inspection command makes recommendations visible before computation begins,
 while still allowing experienced users to override every setting.
+
+
+Projection recommendations are based on **shared usable loci for population
+pairs**, because pairwise jSFS inference requires both populations to contribute
+data at the same sites. This is more informative than evaluating populations
+independently.
