@@ -113,3 +113,24 @@ __all__ += [
     "summarize_linked_bootstrap_calibration",
     "write_linked_bootstrap_calibration",
 ]
+
+
+from .mechanistic_linkage import (
+    MechanisticLinkageScenario,
+    default_mechanistic_linkage_scenarios,
+    plot_mechanistic_linkage,
+    run_mechanistic_linkage_calibration,
+    simulate_msprime_counts,
+    summarize_mechanistic_linkage,
+    write_mechanistic_linkage_calibration,
+)
+
+__all__ += [
+    "MechanisticLinkageScenario",
+    "default_mechanistic_linkage_scenarios",
+    "plot_mechanistic_linkage",
+    "run_mechanistic_linkage_calibration",
+    "simulate_msprime_counts",
+    "summarize_mechanistic_linkage",
+    "write_mechanistic_linkage_calibration",
+]
