@@ -42,3 +42,18 @@ The initial implementation deliberately plots geographic coordinates without
 inventing a basemap. A later projected-cartography layer will add real
 boundaries, coastlines, watersheds, and publication export while preserving
 the same standardized flow table.
+
+
+## Projected publication maps
+
+By default, DIFLOW plots longitude and latitude directly.
+
+For publication work, users may request a projected coordinate reference system:
+
+    diflow infer \
+      ... \
+      --map-crs EPSG:5070
+
+The selected CRS is recorded in run metadata and provenance. DIFLOW does not
+silently choose a regional projection because an appropriate CRS depends on the
+study region.
