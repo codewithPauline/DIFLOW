@@ -66,7 +66,9 @@ For each candidate pair, DIFLOW currently compares isolation, symmetric continuo
 
 ## 9. Understand uncertainty and status
 
-With bootstrap enabled, DIFLOW resamples loci, rebuilds the projected jSFS, refits the asymmetric model, and measures how consistently one direction exceeds the reverse direction.
+With bootstrap enabled, DIFLOW rebuilds projected jSFS replicates, refits the asymmetric model, and measures how consistently one direction exceeds the reverse direction.
+
+By default, loci are resampled independently. For linked SNPs with meaningful genomic positions, users can request fixed-window block bootstrap with `--bootstrap-block-bp`.
 
 Formal status values are supported, ambiguous, and unsupported.
 
@@ -82,6 +84,6 @@ The map is a visualization of model-based evidence. It is not independent proof 
 
 ## 12. Current research-stage limitations
 
-Important remaining work includes folded/unfolded polarization safeguards, block bootstrap for linked markers, simulation calibration of decision thresholds, large benchmark studies, broader real-data testing, parallel/HPC execution, and indexed .vcf.gz/BCF support.
+Important remaining work includes explicit ancestral-polarization input, simulation calibration of block-bootstrap coverage under realistic linkage, decision-threshold calibration, large benchmark studies, broader real-data testing, parallel/HPC execution, and indexed .vcf.gz/BCF support.
 
 Do not treat a current development build as a validated black-box estimator.
