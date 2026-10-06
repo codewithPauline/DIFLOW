@@ -83,4 +83,15 @@ def source_sink_summary(
             }
         )
 
-    return pd.DataFrame(rows)
+    return pd.DataFrame(
+        rows,
+        columns=[
+            "population",
+            "outgoing_migration",
+            "incoming_migration",
+            "net_flow",
+            "network_role",
+            "out_degree",
+            "in_degree",
+        ],
+    )
