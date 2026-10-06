@@ -122,6 +122,7 @@ def test_string_false_is_not_treated_as_true():
 
 def test_invalid_boolean_text_is_rejected():
     evidence = _evidence()
+    evidence["interval_separated"] = evidence["interval_separated"].astype(object)
     evidence.loc[0, "interval_separated"] = "maybe"
 
     with pytest.raises(ValueError, match="interval_separated"):
