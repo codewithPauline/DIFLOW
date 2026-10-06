@@ -536,6 +536,18 @@ diflow campaign \
 
 See [docs/campaign.md](docs/campaign.md).
 
+## Validation evidence archive
+
+After empirical validation and release review, freeze the exact evidence used
+for release decisions:
+
+```bash
+diflow archive-validation --results validation_campaign/results/
+```
+
+DIFLOW writes a file inventory and SHA-256 checksum manifest for reproducible
+archival.
+
 ## Release readiness
 
 The software infrastructure is now broad, but final scientific validation still
