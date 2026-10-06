@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from diflow.inspection import PRESETS, inspect_dataset
+from diflow.hpc import write_slurm_script
 from diflow.demography import write_profile_likelihood
 from diflow.pipeline import run_infer_pipeline
 from diflow.validation import (
@@ -127,6 +128,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.05,
         help="Maximum tolerated false directional-positive rate.",
     )
+
+    slurm = subparsers.add_parser(
+        "slurm",
+        help="Generate a reproducible Slurm script for a DIFLOW command.",
+    )
+    slurm.add_argument("--run-command", required=True)
+    slurm.add_argument("--script", required=True)
+    slurm.add_argument("--job-name", default="DIFLOW")
+    slurm.add_argument("--cpus", type=int, default=8)
+    slurm.add_argument("--mem-gb", type=int, default=32)
+    slurm.add_argument("--hours", type=int, default=24)
+    slurm.add_argument("--email", default=None)
 
     profile = subparsers.add_parser(
         "profile",
@@ -507,6 +520,20 @@ def main(argv=None) -> int:
             f"{selected.directional_sensitivity:.3f}"
         )
         print(f"Results: {args.output}")
+        return 0
+
+    if args.command == "slurm":
+        script = write_slurm_script(
+            args.script,
+            command=args.run_command,
+            job_name=args.job_name,
+            cpus=args.cpus,
+            mem_gb=args.mem_gb,
+            hours=args.hours,
+            email=args.email,
+        )
+        print(f"DIFLOW Slurm script: {script}")
+        print("Submit with: sbatch " + str(script))
         return 0
 
     if args.command == "profile":
