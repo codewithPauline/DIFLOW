@@ -46,3 +46,4 @@
 ## Research-stage warning
 
 DIFLOW is under active development. Current directional classifications and decision thresholds still require broad simulation calibration before the software should be treated as a validated black-box estimator.
+- [Known Limitations](limitations.md) — assumptions, failure regimes, and current scientific boundaries.
