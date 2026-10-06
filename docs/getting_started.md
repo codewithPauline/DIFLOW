@@ -84,6 +84,12 @@ The map is a visualization of model-based evidence. It is not independent proof 
 
 ## 12. Current research-stage limitations
 
-Important remaining work includes explicit ancestral-polarization input, simulation calibration of block-bootstrap coverage under realistic linkage, decision-threshold calibration, large benchmark studies, broader real-data testing, parallel/HPC execution, and indexed .vcf.gz/BCF support.
+Important remaining work includes final large-scale simulation calibration, final release-threshold selection, external-method benchmarking, broader real-data testing, internally benchmarked pair-level parallelism, interactive exploration, and BCF/indexed random-access input support.
 
 Do not treat a current development build as a validated black-box estimator.
+
+## Reproducibility records
+
+Every inference run writes `resolved_config.json` and
+`run_provenance.json` in addition to the tabular metadata. The provenance
+record includes input SHA-256 hashes and software versions.
