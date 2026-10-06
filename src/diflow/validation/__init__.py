@@ -178,3 +178,22 @@ __all__ += [
     "summarize_method_comparison",
     "validate_comparator_table",
 ]
+
+
+from .release_review import (
+    ReleaseCriteria,
+    review_external_comparison,
+    review_linkage_coverage,
+    review_recovery_grid,
+    review_threshold_calibration,
+    review_validation_campaign,
+)
+
+__all__ += [
+    "ReleaseCriteria",
+    "review_external_comparison",
+    "review_linkage_coverage",
+    "review_recovery_grid",
+    "review_threshold_calibration",
+    "review_validation_campaign",
+]
