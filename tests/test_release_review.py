@@ -1,6 +1,7 @@
 import json
 
 import pandas as pd
+import pytest
 
 from diflow.validation.release_review import (
     ReleaseCriteria,
@@ -178,3 +179,30 @@ def test_release_review_flags_missing_external_version(tmp_path):
         blocker["metric"] == "external_method_versions"
         for blocker in summary["blockers"]
     )
+
+
+
+@pytest.mark.parametrize(
+    "column,value",
+    [
+        ("false_directional_positive_rate", float("nan")),
+        ("directional_sensitivity", 1.2),
+        ("direction_accuracy_when_called", -0.1),
+    ],
+)
+def test_release_review_rejects_invalid_threshold_metrics(
+    tmp_path,
+    column,
+    value,
+):
+    root = tmp_path / "results"
+    _write_valid_campaign(root)
+    threshold_path = (
+        root / "threshold_calibration" / "selected_thresholds.csv"
+    )
+    selected = pd.read_csv(threshold_path)
+    selected.loc[0, column] = value
+    selected.to_csv(threshold_path, index=False)
+
+    with pytest.raises(ValueError, match=column):
+        review_validation_campaign(root)
