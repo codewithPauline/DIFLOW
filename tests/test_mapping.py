@@ -65,3 +65,22 @@ def test_negative_migration_rejected():
     )
     with pytest.raises(ValueError):
         validate_flows(flows)
+
+
+
+def test_projected_map_coordinates():
+    flows = pd.DataFrame(
+        {
+            "source": ["A"],
+            "destination": ["B"],
+            "migration": [0.03],
+            "support": [0.99],
+        }
+    )
+    ax = plot_directional_map(
+        _coordinates(),
+        flows,
+        target_crs="EPSG:5070",
+    )
+    assert "EPSG:5070" in ax.get_xlabel()
+    assert len(ax.patches) == 1
