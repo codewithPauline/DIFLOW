@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from diflow.inspection import PRESETS, inspect_dataset
+from diflow.demography import write_profile_likelihood
 from diflow.pipeline import run_infer_pipeline
 from diflow.validation import (
     write_forward_stress_benchmark,
@@ -126,6 +127,24 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.05,
         help="Maximum tolerated false directional-positive rate.",
     )
+
+    profile = subparsers.add_parser(
+        "profile",
+        help="Profile one directional migration parameter from a saved jSFS.",
+    )
+    profile.add_argument("--spectrum", required=True, help="Saved .npy pairwise spectrum.")
+    profile.add_argument(
+        "--parameter",
+        required=True,
+        choices=("m_a_to_b", "m_b_to_a"),
+    )
+    profile.add_argument("--output", required=True)
+    profile.add_argument("--points", type=int, default=15)
+    profile.add_argument("--starts", type=int, default=10)
+    profile.add_argument("--maxiter", type=int, default=100)
+    profile.add_argument("--confidence", type=float, default=0.95)
+    profile.add_argument("--seed", type=int, default=42)
+    profile.add_argument("--polarized", action="store_true")
 
     infer = subparsers.add_parser(
         "infer",
@@ -479,6 +498,37 @@ def main(argv=None) -> int:
             "Directional sensitivity: "
             f"{selected.directional_sensitivity:.3f}"
         )
+        print(f"Results: {args.output}")
+        return 0
+
+    if args.command == "profile":
+        if args.points < 5:
+            parser.error("--points must be at least 5.")
+        if args.starts < 1:
+            parser.error("--starts must be at least 1.")
+        if not 0 < args.confidence < 1:
+            parser.error("--confidence must lie within (0, 1).")
+        result = write_profile_likelihood(
+            args.spectrum,
+            parameter=args.parameter,
+            output_dir=args.output,
+            points=args.points,
+            starts=args.starts,
+            maxiter=args.maxiter,
+            confidence=args.confidence,
+            seed=args.seed,
+            polarized=args.polarized,
+        )
+        print("DIFLOW profile likelihood")
+        print(f"Parameter: {result.parameter}")
+        print(f"MLE: {result.mle:.6g}")
+        if result.lower is None or result.upper is None:
+            print("Approximate profile interval: not bounded by tested grid")
+        else:
+            print(
+                f"Approximate {result.confidence:.1%} profile interval: "
+                f"[{result.lower:.6g}, {result.upper:.6g}]"
+            )
         print(f"Results: {args.output}")
         return 0
 
