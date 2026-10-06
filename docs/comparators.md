@@ -61,3 +61,8 @@ This prevents a visually attractive comparison from silently mixing:
 For exploratory work only, `--allow-unmatched` disables the complete-key
 requirement. Truth inconsistencies and mixed estimands remain scientific
 problems and should not be ignored in publication analyses.
+
+
+For the release-grade execution protocol, including provenance, estimand
+compatibility, failed-run reporting, and direction-only comparisons, see
+[External Benchmark Protocol](external_benchmark_protocol.md).
