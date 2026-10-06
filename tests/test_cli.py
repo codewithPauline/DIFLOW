@@ -60,3 +60,24 @@ def test_profile_cli_parses():
     assert args.command == "profile"
     assert args.parameter == "m_a_to_b"
     assert args.points == 15
+
+
+
+def test_infer_accepts_calibrated_threshold_file():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "infer",
+            "--vcf", "data.vcf",
+            "--popmap", "popmap.tsv",
+            "--coords", "coords.csv",
+            "--output", "results",
+            "--projection-chromosomes", "8",
+            "--thresholds-file", "selected_thresholds.csv",
+            "--min-model-weight", "0.85",
+        ]
+    )
+    assert args.thresholds_file == "selected_thresholds.csv"
+    assert args.min_model_weight == 0.85
+    assert args.min_directional_support is None
+    assert args.min_abs_asymmetry is None
