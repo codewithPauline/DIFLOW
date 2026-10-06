@@ -26,7 +26,7 @@
 
 ## Validation
 
-- [Benchmarking Strategy](benchmarking.md)
+- [Benchmarking Strategy](benchmarking.md) — recovery, stress, forward-time, and large recovery-grid validation.
 
 ## Research-stage warning
 
