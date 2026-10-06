@@ -244,3 +244,32 @@ def test_release_review_rejects_invalid_recovery_metrics(
 
     with pytest.raises(ValueError, match=error_match):
         review_validation_campaign(root)
+
+
+
+@pytest.mark.parametrize(
+    "column,value,error_match",
+    [
+        ("success_rate", 1.1, "mechanistic success_rate"),
+        ("success_rate", float("nan"), "mechanistic success_rate"),
+        ("coverage_a_to_b", -0.1, "coverage_a_to_b"),
+        ("coverage_b_to_a", 1.2, "coverage_b_to_a"),
+    ],
+)
+def test_release_review_rejects_invalid_linkage_metrics(
+    tmp_path,
+    column,
+    value,
+    error_match,
+):
+    root = tmp_path / "results"
+    _write_valid_campaign(root)
+    linkage_path = (
+        root / "mechanistic_linkage" / "mechanistic_grid_summary.csv"
+    )
+    linkage = pd.read_csv(linkage_path)
+    linkage.loc[0, column] = value
+    linkage.to_csv(linkage_path, index=False)
+
+    with pytest.raises(ValueError, match=error_match):
+        review_validation_campaign(root)
