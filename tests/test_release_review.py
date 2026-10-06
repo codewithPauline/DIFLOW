@@ -76,6 +76,10 @@ def _write_valid_campaign(root):
                 "asymmetry_threshold": 0.25,
                 "methods": ["DIFLOW", "ExternalMethod"],
                 "estimands": ["dadi_scaled_migration"],
+                "method_versions": {
+                    "DIFLOW": ["0.0.1"],
+                    "ExternalMethod": ["1.2.3"],
+                },
                 "magnitude_metrics_reported": True,
             }
         ),
@@ -154,5 +158,23 @@ def test_release_review_flags_missing_comparison_provenance(tmp_path):
     assert summary["release_ready"] is False
     assert any(
         blocker["metric"] == "comparison_provenance"
+        for blocker in summary["blockers"]
+    )
+
+
+
+def test_release_review_flags_missing_external_version(tmp_path):
+    root = tmp_path / "results"
+    _write_valid_campaign(root)
+    metadata_path = root / "external_comparison" / "comparison_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["method_versions"] = {"DIFLOW": ["0.0.1"]}
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    _, summary = review_validation_campaign(root)
+
+    assert summary["release_ready"] is False
+    assert any(
+        blocker["metric"] == "external_method_versions"
         for blocker in summary["blockers"]
     )
