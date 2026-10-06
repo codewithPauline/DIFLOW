@@ -117,3 +117,18 @@ def test_data_requirements_command_parses():
     assert args.min_direction_accuracy == 0.92
     assert args.max_false_direction_rate == 0.04
     assert args.min_success_rate == 0.96
+
+
+
+def test_archive_validation_command_parses():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "archive-validation",
+            "--results", "validation_campaign/results",
+            "--output", "archive/manifest.json",
+        ]
+    )
+    assert args.command == "archive-validation"
+    assert args.results == "validation_campaign/results"
+    assert args.output == "archive/manifest.json"
