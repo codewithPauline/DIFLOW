@@ -106,3 +106,26 @@ def test_recovery_summary_rejects_mislabeled_direction():
     )
     with pytest.raises(ValueError, match="disagrees"):
         summarize_recovery(results)
+
+
+
+def test_recovery_summary_does_not_treat_string_false_as_success():
+    results = pd.DataFrame(
+        {
+            "scenario": ["sym", "sym"],
+            "success": ["False", "True"],
+            "true_m_a_to_b": [1.0, 1.0],
+            "true_m_b_to_a": [1.0, 1.0],
+            "estimated_m_a_to_b": [4.0, 1.0],
+            "estimated_m_b_to_a": [1.0, 1.0],
+            "optimizer_stable": [False, True],
+        }
+    )
+
+    summary = summarize_recovery(results, asymmetry_threshold=0.25)
+
+    row = summary.iloc[0]
+    assert row["attempted_replicates"] == 2
+    assert row["successful_replicates"] == 1
+    assert row["success_rate"] == pytest.approx(0.5)
+    assert row["false_directional_positive_rate"] == pytest.approx(0.0)
