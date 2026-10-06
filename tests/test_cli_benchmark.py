@@ -66,3 +66,17 @@ def test_benchmark_accepts_linked_suite():
     assert args.snps_per_block == 8
     assert args.linked_block_bp == 50000
     assert args.linkage_concentration == 15
+
+
+
+def test_benchmark_accepts_mechanistic_grid_suite():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "benchmark",
+            "--output", "mechanistic_grid",
+            "--suite", "mechanistic-grid",
+            "--replicates", "2",
+        ]
+    )
+    assert args.suite == "mechanistic-grid"
