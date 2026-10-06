@@ -26,6 +26,8 @@ def test_validation_campaign_writes_manifest_and_jobs(tmp_path):
     assert "data_requirements" in manifest["postprocessing"]
     assert "data-requirements" in manifest["postprocessing"]["data_requirements"]
     assert "release_review_command" in manifest["postprocessing"]
+    assert "archive_validation" in manifest["postprocessing"]
+    assert "archive-validation" in manifest["postprocessing"]["archive_validation"]
     assert "release-review" in manifest["postprocessing"]["release_review_command"]
     mechanistic_command = manifest["jobs"]["mechanistic_linkage"]["command"]
     assert "--suite mechanistic-grid" in mechanistic_command
