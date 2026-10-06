@@ -309,6 +309,35 @@ def review_external_comparison(summary: pd.DataFrame) -> list[dict]:
     ]
 
 
+
+
+def review_data_requirements(path: str | Path) -> list[dict]:
+    """Require empirical minimum-data guidance from the recovery campaign."""
+    source = Path(path)
+    data = json.loads(source.read_text(encoding="utf-8"))
+    status = str(data.get("status", ""))
+    passing = int(data.get("passing_regimes", 0))
+    minima = data.get("pareto_minimum_regimes", [])
+    passed = (
+        status == "recommendations_available"
+        and passing > 0
+        and len(minima) > 0
+    )
+    return [
+        _metric_check(
+            section="data_requirements",
+            metric="empirical_minimum_guidance",
+            observed=float(passing),
+            target=">= 1 tested passing regime with Pareto-minimum guidance",
+            passed=passed,
+            detail=(
+                f"Status={status}; passing regimes={passing}; "
+                f"Pareto minima={len(minima)}."
+            ),
+        )
+    ]
+
+
 def review_validation_campaign(
     results_dir: str | Path,
     *,
@@ -337,6 +366,9 @@ def review_validation_campaign(
         "external_comparison": (
             root / "external_comparison" / "method_comparison_summary.csv"
         ),
+        "data_requirements": (
+            root / "data_requirements" / "data_requirements.json"
+        ),
     }
 
     reviewers = {
@@ -361,6 +393,10 @@ def review_validation_campaign(
                     detail=f"Required empirical output not found: {path}",
                 )
             )
+            continue
+
+        if section == "data_requirements":
+            checks.extend(review_data_requirements(path))
             continue
 
         frame = pd.read_csv(path)
