@@ -6,6 +6,7 @@ import argparse
 
 from diflow.inspection import PRESETS, inspect_dataset
 from diflow.pipeline import run_infer_pipeline
+from diflow.validation import write_recovery_benchmark
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -39,6 +40,29 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional directory for inspection tables and recommended run output.",
     )
+
+
+    benchmark = subparsers.add_parser(
+        "benchmark",
+        help="Run model-consistent known-truth migration recovery benchmarks.",
+    )
+    benchmark.add_argument("--output", required=True, help="Benchmark output directory.")
+    benchmark.add_argument("--replicates", type=int, default=10)
+    benchmark.add_argument(
+        "--chromosomes",
+        type=int,
+        default=20,
+        help="Sampled chromosomes per population in simulated spectra.",
+    )
+    benchmark.add_argument(
+        "--sites",
+        type=int,
+        default=5000,
+        help="Segregating sites sampled per replicate.",
+    )
+    benchmark.add_argument("--starts", type=int, default=10)
+    benchmark.add_argument("--maxiter", type=int, default=100)
+    benchmark.add_argument("--seed", type=int, default=42)
 
     infer = subparsers.add_parser(
         "infer",
@@ -147,6 +171,39 @@ def main(argv=None) -> int:
         print(
             "Graph recommendations are computational starting points, not "
             "biological truths; review them before final inference."
+        )
+        return 0
+
+
+    if args.command == "benchmark":
+        if args.replicates < 1:
+            parser.error("--replicates must be at least 1.")
+        if args.chromosomes < 2:
+            parser.error("--chromosomes must be at least 2.")
+        if args.sites < 1:
+            parser.error("--sites must be at least 1.")
+        if args.starts < 1:
+            parser.error("--starts must be at least 1.")
+
+        raw, summary = write_recovery_benchmark(
+            output_dir=args.output,
+            replicates=args.replicates,
+            sample_sizes=(args.chromosomes, args.chromosomes),
+            segregating_sites=args.sites,
+            starts=args.starts,
+            maxiter=args.maxiter,
+            seed=args.seed,
+        )
+        print("DIFLOW known-truth recovery benchmark")
+        print(f"Replicate rows: {len(raw)}")
+        print(f"Scenarios: {len(summary)}")
+        print(f"Results: {args.output}")
+        print("")
+        print(summary.to_string(index=False))
+        print("")
+        print(
+            "This is a model-consistent recovery benchmark. Passing it is necessary "
+            "but does not establish robustness to demographic misspecification."
         )
         return 0
 
