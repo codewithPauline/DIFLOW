@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -339,6 +340,28 @@ def compare_method_files(
     outdir.mkdir(parents=True, exist_ok=True)
     combined.to_csv(outdir / "method_comparison_replicates.csv", index=False)
     summary.to_csv(outdir / "method_comparison_summary.csv", index=False)
+
+    estimands = []
+    if "estimand" in combined.columns:
+        estimands = sorted(
+            {
+                str(value).strip()
+                for value in combined["estimand"].dropna()
+                if str(value).strip()
+            }
+        )
+    metadata = {
+        "direction_only": bool(direction_only),
+        "require_complete_match": bool(require_complete_match),
+        "asymmetry_threshold": float(asymmetry_threshold),
+        "methods": sorted(methods),
+        "estimands": estimands,
+        "magnitude_metrics_reported": not bool(direction_only),
+    }
+    (outdir / "comparison_metadata.json").write_text(
+        json.dumps(metadata, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
     figures: list[Path] = []
 
