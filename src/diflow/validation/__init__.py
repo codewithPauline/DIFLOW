@@ -20,3 +20,22 @@ __all__ = [
     "ValidationScenario",
     "core_validation_scenarios",
 ]
+
+
+from .recovery import (
+    RecoveryScenario,
+    default_recovery_scenarios,
+    run_recovery_benchmark,
+    simulate_model_consistent_spectrum,
+    summarize_recovery,
+    write_recovery_benchmark,
+)
+
+__all__ += [
+    "RecoveryScenario",
+    "default_recovery_scenarios",
+    "run_recovery_benchmark",
+    "simulate_model_consistent_spectrum",
+    "summarize_recovery",
+    "write_recovery_benchmark",
+]
