@@ -144,6 +144,14 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--output", required=True)
     compare.add_argument("--asymmetry-threshold", type=float, default=0.25)
     compare.add_argument(
+        "--direction-only",
+        action="store_true",
+        help=(
+            "Compare only directional ordering/false-direction rates. "
+            "Use when method estimands are not magnitude-compatible."
+        ),
+    )
+    compare.add_argument(
         "--allow-unmatched",
         action="store_true",
         help=(
@@ -614,6 +622,7 @@ def main(argv=None) -> int:
             output_dir=args.output,
             asymmetry_threshold=args.asymmetry_threshold,
             require_complete_match=not args.allow_unmatched,
+            direction_only=args.direction_only,
         )
         print("DIFLOW method comparison")
         print(f"Methods: {len(methods)}")
