@@ -69,7 +69,7 @@ def write_validation_campaign(
             f"--seed {seed + 2000}"
         ),
         "mechanistic_linkage": (
-            f"{executable} benchmark --suite mechanistic "
+            f"{executable} benchmark --suite mechanistic-grid "
             f"--output {shlex.quote(str(result_paths['mechanistic_linkage']))} "
             f"--replicates {replicates} --starts {min(starts, 5)} "
             f"--linked-bootstrap-replicates {bootstrap_replicates} "
