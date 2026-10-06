@@ -1,6 +1,6 @@
 # Command-line reference
 
-DIFLOW currently provides twelve main commands:
+DIFLOW currently provides thirteen main commands:
 
 - diflow inspect
 - diflow infer
@@ -14,6 +14,7 @@ DIFLOW currently provides twelve main commands:
 - diflow benchmark-export
 - diflow release-review
 - diflow data-requirements
+- diflow archive-validation
 
 ## diflow inspect
 
@@ -245,3 +246,13 @@ that meet the chosen accuracy, false-direction, and fit-success targets:
 Outputs include regime-level performance, Pareto-minimum passing regimes, and
 machine-readable/Markdown guidance. These recommendations apply only to the
 validated simulation space and are not universal biological minimums.
+
+
+## Validation evidence archive
+
+Freeze the exact files used to support a release:
+
+    diflow archive-validation \
+      --results validation_campaign/results/
+
+The command writes a JSON inventory and a conventional SHA-256 checksum list.
