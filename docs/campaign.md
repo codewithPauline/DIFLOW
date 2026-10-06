@@ -38,10 +38,22 @@ without repeating all other benchmarks.
 
 ## After the jobs finish
 
-The manifest includes a post-processing threshold-calibration command and a
-release-review checklist.
+The manifest includes a post-processing threshold-calibration command, an
+automated `release-review` command, and a release-review checklist.
 
 Completing the jobs is not enough by itself. The resulting error rates,
 confidence-interval coverage, false directional-positive rates, and sensitivity
 must meet predefined scientific acceptance criteria before default thresholds
 are frozen.
+
+
+## Release review
+
+After the benchmark jobs, threshold calibration, and external-method comparison
+are complete, run:
+
+    diflow release-review \
+      --results validation_campaign/results/
+
+The review writes CSV, JSON, and Markdown summaries and treats missing empirical
+studies as release blockers rather than silently ignoring them.
