@@ -217,3 +217,20 @@ __all__ += [
     "review_threshold_calibration",
     "review_validation_campaign",
 ]
+
+
+from .data_requirements import (
+    DataRequirementTargets,
+    pareto_minimum_regimes,
+    recommend_data_requirements,
+    summarize_data_regimes,
+    write_data_requirements,
+)
+
+__all__ += [
+    "DataRequirementTargets",
+    "pareto_minimum_regimes",
+    "recommend_data_requirements",
+    "summarize_data_regimes",
+    "write_data_requirements",
+]
