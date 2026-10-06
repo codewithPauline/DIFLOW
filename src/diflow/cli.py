@@ -148,6 +148,24 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     infer.add_argument(
+        "--min-model-weight",
+        type=float,
+        default=0.70,
+        help="Minimum asymmetric-model Akaike weight for directional support.",
+    )
+    infer.add_argument(
+        "--min-directional-support",
+        type=float,
+        default=0.95,
+        help="Minimum bootstrap directional support.",
+    )
+    infer.add_argument(
+        "--min-abs-asymmetry",
+        type=float,
+        default=0.25,
+        help="Minimum absolute migration asymmetry index.",
+    )
+    infer.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -396,6 +414,9 @@ def main(argv=None) -> int:
             bootstrap_replicates=effort["bootstrap_replicates"],
             bootstrap_starts=effort["bootstrap_starts"],
             bootstrap_block_bp=args.bootstrap_block_bp,
+            min_model_weight=args.min_model_weight,
+            min_directional_support=args.min_directional_support,
+            min_abs_asymmetry=args.min_abs_asymmetry,
             prepare_only=args.prepare_only,
             seed=args.seed,
         )
