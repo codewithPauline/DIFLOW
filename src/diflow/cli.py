@@ -19,6 +19,7 @@ from diflow.validation import (
     write_mechanistic_linkage_calibration,
     write_decision_evidence_benchmark,
     write_threshold_calibration,
+    compare_method_files,
 )
 
 
@@ -112,6 +113,19 @@ def build_parser() -> argparse.ArgumentParser:
         default="50000,100000,250000",
         help="Comma-separated block sizes in bp for msprime linkage calibration.",
     )
+
+    compare = subparsers.add_parser(
+        "compare",
+        help="Compare standardized benchmark results from multiple methods.",
+    )
+    compare.add_argument(
+        "--method",
+        action="append",
+        required=True,
+        help="Method result as NAME=path.csv. Repeat for each method.",
+    )
+    compare.add_argument("--output", required=True)
+    compare.add_argument("--asymmetry-threshold", type=float, default=0.25)
 
     calibrate = subparsers.add_parser(
         "calibrate",
@@ -497,6 +511,36 @@ def main(argv=None) -> int:
             "Recovery tests model-consistent identifiability; stress and forward "
             "suites challenge misspecification; grid evaluates scaling across data sizes."
         )
+        return 0
+
+    if args.command == "compare":
+        if len(args.method) < 2:
+            parser.error("--method must be supplied at least twice.")
+        if not 0 <= args.asymmetry_threshold <= 1:
+            parser.error("--asymmetry-threshold must lie within [0, 1].")
+        methods = {}
+        for item in args.method:
+            if "=" not in item:
+                parser.error("--method entries must use NAME=path.csv.")
+            name, path = item.split("=", 1)
+            name = name.strip()
+            path = path.strip()
+            if not name or not path:
+                parser.error("--method entries must use non-empty NAME=path.csv.")
+            if name in methods:
+                parser.error(f"duplicate method name: {name}")
+            methods[name] = path
+
+        _, summary, figures = compare_method_files(
+            methods,
+            output_dir=args.output,
+            asymmetry_threshold=args.asymmetry_threshold,
+        )
+        print("DIFLOW method comparison")
+        print(f"Methods: {len(methods)}")
+        print(f"Summary rows: {len(summary)}")
+        print(f"Figures: {len(figures)}")
+        print(f"Results: {args.output}")
         return 0
 
     if args.command == "calibrate":
