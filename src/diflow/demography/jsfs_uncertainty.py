@@ -133,6 +133,7 @@ def bootstrap_asymmetric_jsfs(
     confidence: float = 0.95,
     seed: int | None = None,
     block_size_bp: int | None = None,
+    polarized: bool = False,
     fit_function: Callable | None = None,
 ) -> JSFSBootstrapResult:
     """Bootstrap asymmetric migration estimates from projected jSFS data.
@@ -195,6 +196,7 @@ def bootstrap_asymmetric_jsfs(
                 starts=starts,
                 seed=None if seed is None else seed + replicate + 1,
                 maxiter=maxiter,
+                polarized=polarized,
             )
             m_ab = float(fit.best_parameters["m_a_to_b"])
             m_ba = float(fit.best_parameters["m_b_to_a"])
