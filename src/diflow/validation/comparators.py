@@ -114,6 +114,7 @@ def validate_matched_comparison(
     results: pd.DataFrame,
     *,
     require_complete_match: bool = True,
+    allow_mixed_estimands: bool = False,
 ) -> pd.DataFrame:
     """Verify that methods are compared on identical known-truth replicates.
 
@@ -167,7 +168,7 @@ def validate_matched_comparison(
                     f"missing examples={missing}, extra examples={extra}."
                 )
 
-    if "estimand" in frame.columns:
+    if "estimand" in frame.columns and not allow_mixed_estimands:
         estimands = sorted(
             {
                 str(value).strip()
@@ -315,13 +316,11 @@ def compare_method_files(
     if direction_only:
         # Truth and replicate keys must still match, but estimands may differ
         # because only directional ordering is compared.
-        estimand = combined.pop("estimand") if "estimand" in combined.columns else None
         combined = validate_matched_comparison(
             combined,
             require_complete_match=require_complete_match,
+            allow_mixed_estimands=True,
         )
-        if estimand is not None:
-            combined["estimand"] = estimand.to_numpy()
         summary = summarize_direction_only_comparison(
             combined,
             asymmetry_threshold=asymmetry_threshold,
