@@ -6,7 +6,7 @@ DIFLOW currently uses three core biological input files.
 
 Example: data.vcf
 
-The current development parser accepts plain-text VCF files containing biallelic records with a GT genotype field. Multiallelic records are skipped by the conservative parser.
+The current development parser accepts plain-text VCF and gzip-compressed `.vcf.gz` files containing biallelic records with a GT genotype field. Multiallelic records are skipped by the conservative parser.
 
 Current requirements:
 
@@ -15,7 +15,7 @@ Current requirements:
 - a GT field is present
 - every sample listed in the population map occurs in the VCF
 
-Indexed .vcf.gz and BCF support are planned but are not yet the default production reader.
+`.vcf.gz` is read transparently with streaming gzip decompression. BCF and indexed random-access readers remain future production-reader work.
 
 ## Population map
 
@@ -71,3 +71,12 @@ Then inspect the project with:
 Before using DIFLOW, apply population-genomic quality control appropriate to the study design, including sample/locus quality, missingness, relatedness where relevant, linkage considerations, and defensible population definitions.
 
 DIFLOW should not be used as a substitute for upstream genomic QC.
+
+## Polarization
+
+By default, DIFLOW treats ordinary REF/ALT coding as unpolarized and folds the
+observed jSFS during inference.
+
+Use `--polarized` only when upstream processing has established that ALT is
+the derived allele at every included site. DIFLOW does not infer ancestral state
+from VCF REF/ALT labels.
