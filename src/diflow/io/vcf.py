@@ -8,6 +8,7 @@ records and genotypes containing allele indices greater than 1 are skipped.
 from __future__ import annotations
 
 from collections import defaultdict
+import gzip
 from pathlib import Path
 
 import pandas as pd
@@ -47,8 +48,8 @@ def allele_counts_from_vcf(
     Parameters
     ----------
     vcf_path
-        Plain-text VCF path. Gzipped VCF support will be added with the indexed
-        production reader.
+        Plain-text VCF or gzip-compressed .vcf.gz path. Indexed random access is
+        not required for the current streaming reader.
     popmap
         DataFrame with sample and population columns.
     min_called_chromosomes
@@ -74,7 +75,8 @@ def allele_counts_from_vcf(
     rows: list[dict] = []
     samples: list[str] | None = None
 
-    with path.open("r", encoding="utf-8") as handle:
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rt", encoding="utf-8") as handle:
         for raw in handle:
             if raw.startswith("##"):
                 continue
