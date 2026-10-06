@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 
 import pandas as pd
@@ -49,3 +50,18 @@ def test_prepare_only_pipeline(tmp_path: Path):
     assert (out / "pairwise_results.csv").exists()
     assert (out / "run_metadata.csv").exists()
     assert len(list((out / "spectra").glob("*.npy"))) == 1
+
+
+
+def test_pipeline_rejects_single_bootstrap_replicate(tmp_path):
+    from diflow.pipeline import run_infer_pipeline
+
+    with pytest.raises(ValueError, match="bootstrap_replicates must be 0 or at least 2"):
+        run_infer_pipeline(
+            vcf_path=tmp_path / "missing.vcf",
+            popmap_path=tmp_path / "missing.tsv",
+            coordinates_path=tmp_path / "missing.csv",
+            output_dir=tmp_path / "out",
+            projection_chromosomes=4,
+            bootstrap_replicates=1,
+        )
