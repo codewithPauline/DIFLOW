@@ -95,6 +95,9 @@ DIFLOW currently includes:
 - msprime/tskit recombination-based linkage validation
 - automatic resolved configuration and SHA-256 run provenance
 - Slurm job-script generation for HPC execution
+- process-isolated pair-level parallel inference
+- self-contained searchable HTML results reports
+- standardized external-method comparison
 
 ## Documentation
 
@@ -389,8 +392,8 @@ DIFLOW/
 - [x] End-to-end CLI
 - [x] Projected publication cartography
 - [x] Slurm/HPC script generation
-- [ ] Internally benchmarked pair-level parallel execution
-- [ ] Interactive exploration
+- [x] Process-isolated pair-level parallel execution
+- [x] Self-contained interactive HTML result exploration
 
 ### Validation
 - [x] Validation metric framework
@@ -405,7 +408,8 @@ DIFLOW/
 - [x] Correlated-block locus-vs-block bootstrap calibration framework
 - [x] Mechanistic msprime/tskit LD-recombination validation framework
 - [ ] Final large-scale linkage coverage calibration
-- [ ] Benchmark against established methods
+- [x] Standardized external-method comparison framework
+- [ ] Execute established-method benchmark study
 
 ## Scientific guardrails
 
@@ -442,6 +446,29 @@ Run tests:
 pytest
 ```
 
+## Interactive report
+
+Create a searchable HTML report from a completed run:
+
+```bash
+diflow report --results results/
+```
+
+See [docs/report.md](docs/report.md).
+
+## External method comparison
+
+Normalize and compare matched simulation outputs from multiple methods:
+
+```bash
+diflow compare \
+  --method DIFLOW=diflow_results.csv \
+  --method OTHER=other_method_results.csv \
+  --output comparison/
+```
+
+See [docs/comparators.md](docs/comparators.md).
+
 ## HPC
 
 Generate a Slurm job script for a complete DIFLOW command:
@@ -456,6 +483,15 @@ diflow slurm \
 ```
 
 See [docs/hpc.md](docs/hpc.md).
+
+## Release readiness
+
+The software infrastructure is now broad, but final scientific validation still
+requires large empirical simulation campaigns and external-method execution.
+
+See [docs/release_readiness.md](docs/release_readiness.md) for the distinction
+between implemented capability and evidence required before a validated 1.0
+release.
 
 ## License
 
