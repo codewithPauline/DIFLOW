@@ -81,6 +81,7 @@ def fit_multistart(
     top_fraction: float = 0.25,
     ll_tolerance: float = 2.0,
     parameter_spread_tolerance: float = 0.5,
+    polarized: bool = False,
 ) -> MultiStartResult:
     """Fit one demographic model from multiple starting points.
 
@@ -109,6 +110,7 @@ def fit_multistart(
                 initial=point,
                 grid_points=grid_points,
                 maxiter=maxiter,
+                polarized=polarized,
             )
             row = {
                 "run": run_id,
