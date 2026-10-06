@@ -6,7 +6,11 @@ from .comparison import ModelScore, aic, aicc, rank_models
 from .fit_models import CandidateFit, compare_candidate_models
 from .multistart import MultiStartResult, fit_multistart, generate_starting_points
 from .diagnostics import summarize_multistart
-from .jsfs_uncertainty import JSFSBootstrapResult, bootstrap_asymmetric_jsfs
+from .jsfs_uncertainty import (
+    JSFSBootstrapResult,
+    bootstrap_asymmetric_jsfs,
+    directional_support_for_estimate,
+)
 
 __all__ = [
     "AsymmetricIMParams",
@@ -26,6 +30,7 @@ __all__ = [
     "summarize_multistart",
     "JSFSBootstrapResult",
     "bootstrap_asymmetric_jsfs",
+    "directional_support_for_estimate",
 ]
 
 
