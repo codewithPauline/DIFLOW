@@ -8,6 +8,7 @@ from pathlib import Path
 from diflow.inspection import PRESETS, inspect_dataset
 from diflow.hpc import write_slurm_script
 from diflow.report import write_html_report
+from diflow.campaign import write_validation_campaign
 from diflow.demography import write_profile_likelihood
 from diflow.pipeline import run_infer_pipeline
 from diflow.validation import (
@@ -143,6 +144,20 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.05,
         help="Maximum tolerated false directional-positive rate.",
     )
+
+    campaign = subparsers.add_parser(
+        "campaign",
+        help="Generate a release-validation Slurm campaign and manifest.",
+    )
+    campaign.add_argument("--output", required=True)
+    campaign.add_argument("--replicates", type=int, default=50)
+    campaign.add_argument("--starts", type=int, default=10)
+    campaign.add_argument("--bootstrap-replicates", type=int, default=100)
+    campaign.add_argument("--cpus", type=int, default=8)
+    campaign.add_argument("--mem-gb", type=int, default=64)
+    campaign.add_argument("--hours", type=int, default=72)
+    campaign.add_argument("--seed", type=int, default=42)
+    campaign.add_argument("--email", default=None)
 
     report = subparsers.add_parser(
         "report",
@@ -581,6 +596,22 @@ def main(argv=None) -> int:
             f"{selected.directional_sensitivity:.3f}"
         )
         print(f"Results: {args.output}")
+        return 0
+
+    if args.command == "campaign":
+        manifest = write_validation_campaign(
+            args.output,
+            replicates=args.replicates,
+            starts=args.starts,
+            bootstrap_replicates=args.bootstrap_replicates,
+            cpus=args.cpus,
+            mem_gb=args.mem_gb,
+            hours=args.hours,
+            seed=args.seed,
+            email=args.email,
+        )
+        print(f"DIFLOW validation campaign: {manifest}")
+        print(f"Submit jobs with: bash {Path(args.output) / 'submit_all.sh'}")
         return 0
 
     if args.command == "report":
