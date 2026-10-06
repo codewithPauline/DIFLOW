@@ -120,6 +120,15 @@ def evaluate_thresholds(
     min_abs_asymmetry: float,
 ) -> dict:
     """Evaluate one threshold combination against known simulation truth."""
+    for name, value in (
+        ("min_model_weight", min_model_weight),
+        ("min_directional_support", min_directional_support),
+        ("min_abs_asymmetry", min_abs_asymmetry),
+    ):
+        value = float(value)
+        if not np.isfinite(value) or not 0 <= value <= 1:
+            raise ValueError(f"{name} must lie within [0, 1].")
+
     frame = _validate_evidence_table(evidence)
 
     called = (
