@@ -40,7 +40,7 @@ should claim validated default behavior:
    differences in estimands.
 5. Run at least one real-data case study as a demonstration of workflow and
    interpretation, not as proof of accuracy.
-6. Document known failure regimes and recommended minimum data requirements.
+6. Derive and document recommended minimum data requirements from the completed simulation campaign. Known failure regimes are already documented in [limitations.md](limitations.md).
 7. Freeze a release candidate, rerun all tests/benchmarks, archive outputs, and
    only then create a formal software release/DOI.
 
