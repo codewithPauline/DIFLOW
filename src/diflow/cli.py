@@ -21,6 +21,8 @@ from diflow.validation import (
     write_decision_evidence_benchmark,
     write_threshold_calibration,
     compare_method_files,
+    ReleaseCriteria,
+    review_validation_campaign,
 )
 
 
@@ -158,6 +160,19 @@ def build_parser() -> argparse.ArgumentParser:
     campaign.add_argument("--hours", type=int, default=72)
     campaign.add_argument("--seed", type=int, default=42)
     campaign.add_argument("--email", default=None)
+
+    release_review = subparsers.add_parser(
+        "release-review",
+        help="Evaluate completed validation results against release criteria.",
+    )
+    release_review.add_argument("--results", required=True)
+    release_review.add_argument("--output", default=None)
+    release_review.add_argument("--min-direction-accuracy", type=float, default=0.90)
+    release_review.add_argument("--max-false-direction-rate", type=float, default=0.05)
+    release_review.add_argument("--min-directional-sensitivity", type=float, default=0.80)
+    release_review.add_argument("--min-ci-coverage", type=float, default=0.90)
+    release_review.add_argument("--max-ci-coverage", type=float, default=0.99)
+    release_review.add_argument("--min-success-rate", type=float, default=0.95)
 
     report = subparsers.add_parser(
         "report",
@@ -612,6 +627,32 @@ def main(argv=None) -> int:
         )
         print(f"DIFLOW validation campaign: {manifest}")
         print(f"Submit jobs with: bash {Path(args.output) / 'submit_all.sh'}")
+        return 0
+
+    if args.command == "release-review":
+        criteria = ReleaseCriteria(
+            min_direction_accuracy=args.min_direction_accuracy,
+            max_false_direction_rate=args.max_false_direction_rate,
+            min_directional_sensitivity=args.min_directional_sensitivity,
+            min_ci_coverage=args.min_ci_coverage,
+            max_ci_coverage=args.max_ci_coverage,
+            min_success_rate=args.min_success_rate,
+        )
+        _, summary = review_validation_campaign(
+            args.results,
+            output_dir=args.output,
+            criteria=criteria,
+        )
+        print("DIFLOW release-readiness review")
+        print(f"Checks passed: {summary['checks_passed']} / {summary['checks_total']}")
+        print(f"Release ready: {'YES' if summary['release_ready'] else 'NO'}")
+        if summary["blockers"]:
+            print("Blockers:")
+            for blocker in summary["blockers"]:
+                print(
+                    f"- {blocker['section']} / {blocker['metric']}: "
+                    f"{blocker['detail']}"
+                )
         return 0
 
     if args.command == "report":
