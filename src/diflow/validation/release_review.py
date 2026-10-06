@@ -284,8 +284,12 @@ def review_linkage_coverage(
     ]
 
 
-def review_external_comparison(summary: pd.DataFrame) -> list[dict]:
-    """Verify that an established-method benchmark is actually present."""
+def review_external_comparison(
+    summary: pd.DataFrame,
+    *,
+    metadata_path: str | Path | None = None,
+) -> list[dict]:
+    """Verify that an established, provenance-complete benchmark is present."""
     required = {"method", "scenario", "replicates"}
     if not required.issubset(summary.columns):
         missing = sorted(required - set(summary.columns))
@@ -294,7 +298,7 @@ def review_external_comparison(summary: pd.DataFrame) -> list[dict]:
         )
     methods = sorted(set(summary["method"].astype(str)))
     external = [name for name in methods if name.lower() != "diflow"]
-    return [
+    checks = [
         _metric_check(
             section="external_comparison",
             metric="external_methods_present",
@@ -307,6 +311,71 @@ def review_external_comparison(summary: pd.DataFrame) -> list[dict]:
             ),
         )
     ]
+
+    if metadata_path is None or not Path(metadata_path).exists():
+        checks.append(
+            _metric_check(
+                section="external_comparison",
+                metric="comparison_provenance",
+                observed=None,
+                target="comparison_metadata.json present",
+                passed=False,
+                detail="External comparison provenance metadata is missing.",
+            )
+        )
+        return checks
+
+    metadata = json.loads(Path(metadata_path).read_text(encoding="utf-8"))
+    strict = bool(metadata.get("require_complete_match", False))
+    estimands = [
+        str(value).strip()
+        for value in metadata.get("estimands", [])
+        if str(value).strip()
+    ]
+    direction_only = bool(metadata.get("direction_only", False))
+
+    checks.extend(
+        [
+            _metric_check(
+                section="external_comparison",
+                metric="strict_matched_replicates",
+                observed=float(strict),
+                target="strict matched scenario/replicate comparison",
+                passed=strict,
+                detail=(
+                    "Release-grade external comparisons must use identical "
+                    "simulation keys across methods."
+                ),
+            ),
+            _metric_check(
+                section="external_comparison",
+                metric="estimand_documented",
+                observed=float(len(estimands)),
+                target=">= 1 explicit estimand label",
+                passed=len(estimands) >= 1,
+                detail=(
+                    "Direction-only mode may contain multiple estimands; "
+                    "magnitude mode must contain one compatible estimand."
+                ),
+            ),
+            _metric_check(
+                section="external_comparison",
+                metric="magnitude_estimand_compatibility",
+                observed=float(len(estimands)),
+                target=(
+                    "any documented estimands in direction-only mode; "
+                    "exactly 1 in magnitude mode"
+                ),
+                passed=(
+                    len(estimands) >= 1
+                    if direction_only
+                    else len(estimands) == 1
+                ),
+                detail=f"direction_only={direction_only}; estimands={estimands}.",
+            ),
+        ]
+    )
+    return checks
 
 
 
@@ -401,7 +470,16 @@ def review_validation_campaign(
 
         frame = pd.read_csv(path)
         if section == "external_comparison":
-            checks.extend(review_external_comparison(frame))
+            checks.extend(
+                review_external_comparison(
+                    frame,
+                    metadata_path=(
+                        root
+                        / "external_comparison"
+                        / "comparison_metadata.json"
+                    ),
+                )
+            )
         else:
             checks.extend(reviewers[section](frame, criteria))
 
