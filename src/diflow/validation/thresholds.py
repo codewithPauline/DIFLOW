@@ -24,6 +24,26 @@ class CalibratedThresholds:
     evaluated_rows: int
 
 
+def _coerce_bool_series(series: pd.Series, *, name: str) -> pd.Series:
+    """Parse strict boolean values without treating non-empty strings as True."""
+    def parse(value):
+        if isinstance(value, (bool, np.bool_)):
+            return bool(value)
+        if isinstance(value, (int, np.integer)) and value in (0, 1):
+            return bool(value)
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes"}:
+                return True
+            if normalized in {"false", "0", "no"}:
+                return False
+        raise ValueError(
+            f"{name} contains invalid boolean value: {value!r}."
+        )
+
+    return series.map(parse).astype(bool)
+
+
 def _validate_evidence_table(frame: pd.DataFrame) -> pd.DataFrame:
     required = {
         "truth_direction",
@@ -55,8 +75,14 @@ def _validate_evidence_table(frame: pd.DataFrame) -> pd.DataFrame:
             "asymmetry_index",
         ]
     )
-    clean["optimizer_stable"] = clean["optimizer_stable"].astype(bool)
-    clean["interval_separated"] = clean["interval_separated"].astype(bool)
+    clean["optimizer_stable"] = _coerce_bool_series(
+        clean["optimizer_stable"],
+        name="optimizer_stable",
+    )
+    clean["interval_separated"] = _coerce_bool_series(
+        clean["interval_separated"],
+        name="interval_separated",
+    )
 
     probability_columns = ("asymmetric_model_weight", "directional_support")
     for column in probability_columns:
