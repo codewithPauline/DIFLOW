@@ -37,7 +37,7 @@ Example:
       --preset standard \
       --output results/
 
-Important options include projection-chromosomes, neighbors, max-distance-km, preset, starts, maxiter, bootstrap-replicates, bootstrap-starts, seed, and prepare-only.
+Important options include projection-chromosomes, neighbors, max-distance-km, preset, starts, maxiter, bootstrap-replicates, bootstrap-starts, bootstrap-block-bp, seed, and prepare-only.
 
 Explicit optimization and bootstrap flags override preset values.
 
@@ -67,6 +67,20 @@ The presets control computational effort. They do not replace model diagnostics,
 When bootstrap-replicates is at least 2, DIFLOW attaches locus-bootstrap uncertainty and passes the resulting evidence into the formal directional classifier.
 
 Without bootstrap, directional labels remain provisional.
+
+For linked SNPs, use a fixed genomic-window block bootstrap:
+
+    diflow infer \
+      --vcf data.vcf \
+      --popmap populations.tsv \
+      --coords coordinates.csv \
+      --projection-chromosomes 8 \
+      --neighbors 4 \
+      --bootstrap-replicates 100 \
+      --bootstrap-block-bp 100000 \
+      --output results/
+
+When block size is omitted, DIFLOW resamples loci independently.
 
 ## Reproducibility
 
