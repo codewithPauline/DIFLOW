@@ -120,6 +120,7 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
         "isolation",
         "symmetric_migration",
         "asymmetric_migration",
+        "secondary_contact_symmetric",
         "secondary_contact_asymmetric",
     )
     scores = []
