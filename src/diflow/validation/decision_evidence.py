@@ -224,13 +224,50 @@ def run_decision_evidence_benchmark(
                     )
 
                 ranking = rank_models(scores, use_aicc=False)
-                asym_row = ranking[
-                    ranking["model"] == "asymmetric_migration"
-                ].iloc[0]
-                asym_fit = fits["asymmetric_migration"]
+                best_model = str(ranking.iloc[0]["model"])
+                directional_models = {
+                    "asymmetric_migration",
+                    "secondary_contact_asymmetric",
+                }
+                directional_model = (
+                    best_model if best_model in directional_models else None
+                )
 
-                m_ab = float(asym_fit.best_parameters["m_a_to_b"])
-                m_ba = float(asym_fit.best_parameters["m_b_to_a"])
+                if directional_model is None:
+                    row.update(
+                        {
+                            "success": True,
+                            "best_model": best_model,
+                            "directional_model": None,
+                            "asymmetric_model_weight": 0.0,
+                            "optimizer_stable": False,
+                            "estimated_m_a_to_b": 0.0,
+                            "estimated_m_b_to_a": 0.0,
+                            "asymmetry_index": 0.0,
+                            "preferred_direction": "none",
+                            "directional_support": 0.0,
+                            "bootstrap_preferred_direction_support": 0.0,
+                            "interval_separated": False,
+                            "m_a_to_b_lower": 0.0,
+                            "m_a_to_b_upper": 0.0,
+                            "m_b_to_a_lower": 0.0,
+                            "m_b_to_a_upper": 0.0,
+                        }
+                    )
+                    rows.append(row)
+                    continue
+
+                directional_row = ranking[
+                    ranking["model"] == directional_model
+                ].iloc[0]
+                directional_fit = fits[directional_model]
+
+                m_ab = float(
+                    directional_fit.best_parameters["m_a_to_b"]
+                )
+                m_ba = float(
+                    directional_fit.best_parameters["m_b_to_a"]
+                )
                 total = m_ab + m_ba
                 asymmetry = 0.0 if total == 0 else (m_ab - m_ba) / total
                 preferred = (
@@ -249,6 +286,7 @@ def run_decision_evidence_benchmark(
                     starts=bootstrap_starts,
                     maxiter=maxiter,
                     seed=run_seed + 500000,
+                    model_name=directional_model,
                 )
 
                 interval_separated = bool(
@@ -264,11 +302,12 @@ def run_decision_evidence_benchmark(
                 row.update(
                     {
                         "success": True,
-                        "best_model": str(ranking.iloc[0]["model"]),
+                        "best_model": best_model,
+                        "directional_model": directional_model,
                         "asymmetric_model_weight": float(
-                            asym_row["akaike_weight"]
+                            directional_row["akaike_weight"]
                         ),
-                        "optimizer_stable": bool(asym_fit.stable),
+                        "optimizer_stable": bool(directional_fit.stable),
                         "estimated_m_a_to_b": m_ab,
                         "estimated_m_b_to_a": m_ba,
                         "asymmetry_index": asymmetry,
