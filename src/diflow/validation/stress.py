@@ -13,6 +13,7 @@ from diflow.demography.candidate_models import (
     asymmetric_migration_model,
     no_migration_model,
     secondary_contact_asymmetric_model,
+    secondary_contact_symmetric_model,
     symmetric_migration_model,
 )
 from diflow.demography.dadi_backend import _require_dadi
@@ -48,8 +49,8 @@ def default_stress_scenarios() -> tuple[StressScenario, ...]:
         ),
         StressScenario(
             name="secondary_contact_symmetric",
-            generating_model="secondary_contact_asymmetric",
-            parameters=(1.0, 1.0, 0.75, 0.15, 0.5, 0.5),
+            generating_model="secondary_contact_symmetric",
+            parameters=(1.0, 1.0, 0.75, 0.15, 0.5),
             expected_direction="symmetric",
             purpose="Test whether recent symmetric contact creates false directional evidence.",
         ),
@@ -74,6 +75,7 @@ _BUILDERS = {
     "isolation": no_migration_model,
     "symmetric_migration": symmetric_migration_model,
     "asymmetric_migration": asymmetric_migration_model,
+    "secondary_contact_symmetric": secondary_contact_symmetric_model,
     "secondary_contact_asymmetric": secondary_contact_asymmetric_model,
 }
 
@@ -81,6 +83,7 @@ _PARAMETER_COUNTS = {
     "isolation": 3,
     "symmetric_migration": 4,
     "asymmetric_migration": 5,
+    "secondary_contact_symmetric": 5,
     "secondary_contact_asymmetric": 6,
 }
 
@@ -223,39 +226,64 @@ def run_stress_benchmark(
                 generating_row = ranking[
                     ranking["model"] == scenario.generating_model
                 ].iloc[0]
-                asym_row = ranking[
-                    ranking["model"] == "asymmetric_migration"
-                ].iloc[0]
-
-                asym_fit = fits["asymmetric_migration"]
-                m_ab = float(asym_fit.best_parameters["m_a_to_b"])
-                m_ba = float(asym_fit.best_parameters["m_b_to_a"])
-                total = m_ab + m_ba
-                asymmetry = 0.0 if total == 0 else (m_ab - m_ba) / total
-                preferred = _preferred_direction(m_ab, m_ba)
-                directional_signal = bool(
-                    float(asym_row["akaike_weight"]) >= min_model_weight
-                    and asym_fit.stable
-                    and abs(asymmetry) >= min_abs_asymmetry
+                directional_models = {
+                    "asymmetric_migration",
+                    "secondary_contact_asymmetric",
+                }
+                directional_model = (
+                    best_model if best_model in directional_models else None
                 )
+
+                if directional_model is None:
+                    m_ab = 0.0
+                    m_ba = 0.0
+                    asymmetry = 0.0
+                    preferred = "none"
+                    asymmetric_weight = 0.0
+                    optimizer_stable = False
+                    directional_signal = False
+                else:
+                    directional_row = ranking[
+                        ranking["model"] == directional_model
+                    ].iloc[0]
+                    directional_fit = fits[directional_model]
+                    m_ab = float(
+                        directional_fit.best_parameters["m_a_to_b"]
+                    )
+                    m_ba = float(
+                        directional_fit.best_parameters["m_b_to_a"]
+                    )
+                    total = m_ab + m_ba
+                    asymmetry = (
+                        0.0 if total == 0 else (m_ab - m_ba) / total
+                    )
+                    preferred = _preferred_direction(m_ab, m_ba)
+                    asymmetric_weight = float(
+                        directional_row["akaike_weight"]
+                    )
+                    optimizer_stable = bool(directional_fit.stable)
+                    directional_signal = bool(
+                        asymmetric_weight >= min_model_weight
+                        and optimizer_stable
+                        and abs(asymmetry) >= min_abs_asymmetry
+                    )
 
                 row.update(
                     {
                         "success": True,
                         "best_model": best_model,
+                        "directional_model": directional_model,
                         "correct_model_selected": best_model
                         == scenario.generating_model,
                         "generating_model_weight": float(
                             generating_row["akaike_weight"]
                         ),
-                        "asymmetric_model_weight": float(
-                            asym_row["akaike_weight"]
-                        ),
+                        "asymmetric_model_weight": asymmetric_weight,
                         "estimated_m_a_to_b": m_ab,
                         "estimated_m_b_to_a": m_ba,
                         "estimated_asymmetry": asymmetry,
                         "preferred_direction": preferred,
-                        "asymmetric_optimizer_stable": bool(asym_fit.stable),
+                        "asymmetric_optimizer_stable": optimizer_stable,
                         "provisional_directional_signal": directional_signal,
                     }
                 )
