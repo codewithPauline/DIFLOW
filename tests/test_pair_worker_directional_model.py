@@ -54,6 +54,13 @@ def _fake_fit_factory():
             "m_a_to_b": 0.9,
             "m_b_to_a": 0.1,
         },
+        "secondary_contact_symmetric": {
+            "nu_a": 1.0,
+            "nu_b": 1.0,
+            "isolation_time": 0.6,
+            "contact_time": 0.2,
+            "migration": 0.5,
+        },
         "secondary_contact_asymmetric": {
             "nu_a": 1.0,
             "nu_b": 1.0,
@@ -136,3 +143,38 @@ def test_pair_worker_uses_secondary_contact_winner_parameters(monkeypatch):
     assert result.row["m_a_to_b_scaled"] == 0.2
     assert result.row["m_b_to_a_scaled"] == 1.1
     assert result.row["preferred_direction"] == "B->A"
+
+
+
+def test_pair_worker_does_not_emit_direction_for_symmetric_secondary_contact(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        pair_worker,
+        "pairwise_projected_jsfs",
+        lambda *args, **kwargs: _projected(),
+    )
+    monkeypatch.setattr(pair_worker, "fit_multistart", _fake_fit_factory())
+    monkeypatch.setattr(
+        pair_worker,
+        "rank_models",
+        lambda scores, use_aicc=False: pd.DataFrame(
+            {
+                "model": [
+                    "secondary_contact_symmetric",
+                    "secondary_contact_asymmetric",
+                    "asymmetric_migration",
+                    "symmetric_migration",
+                    "isolation",
+                ],
+                "akaike_weight": [0.80, 0.10, 0.05, 0.03, 0.02],
+            }
+        ),
+    )
+
+    result = infer_pair_task(_task())
+
+    assert result.row["best_model"] == "secondary_contact_symmetric"
+    assert result.row["status"] == "unsupported"
+    assert result.row["directional_model"] is None
+    assert result.row["preferred_direction"] is None
