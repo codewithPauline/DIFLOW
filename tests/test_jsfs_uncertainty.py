@@ -134,3 +134,29 @@ def test_directional_support_helper_is_public():
     assert directional_support_for_estimate(0.98, 1.0, 0.2) == pytest.approx(0.98)
     assert directional_support_for_estimate(0.98, 0.2, 1.0) == pytest.approx(0.02)
     assert directional_support_for_estimate(0.98, 0.5, 0.5) == pytest.approx(0.5)
+
+
+
+def test_jsfs_bootstrap_uses_requested_directional_model():
+    seen = []
+
+    def recording_fit(spectrum, model_name, *, starts, seed, maxiter):
+        seen.append(model_name)
+        return SimpleNamespace(
+            best_parameters={"m_a_to_b": 0.8, "m_b_to_a": 0.2}
+        )
+
+    result = bootstrap_asymmetric_jsfs(
+        _counts(),
+        "A",
+        "B",
+        chromosomes_a=4,
+        chromosomes_b=4,
+        replicates=6,
+        seed=11,
+        fit_function=recording_fit,
+        model_name="secondary_contact_asymmetric",
+    )
+
+    assert result.successful_replicates == 6
+    assert set(seen) == {"secondary_contact_asymmetric"}
