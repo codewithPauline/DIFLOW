@@ -191,3 +191,22 @@ def test_recovery_summary_rejects_invalid_successful_estimate(
 
     with pytest.raises(ValueError, match=error_match):
         summarize_recovery(results)
+
+
+
+def test_recovery_summary_does_not_treat_string_false_as_stable():
+    results = pd.DataFrame(
+        {
+            "scenario": ["directional", "directional"],
+            "success": [True, True],
+            "true_m_a_to_b": [1.0, 1.0],
+            "true_m_b_to_a": [0.25, 0.25],
+            "estimated_m_a_to_b": [0.9, 1.1],
+            "estimated_m_b_to_a": [0.3, 0.2],
+            "optimizer_stable": ["False", "True"],
+        }
+    )
+
+    summary = summarize_recovery(results)
+
+    assert summary.iloc[0]["optimizer_stable_rate"] == pytest.approx(0.5)
