@@ -172,6 +172,7 @@ def run_decision_evidence_benchmark(
         "isolation": 3,
         "symmetric_migration": 4,
         "asymmetric_migration": 5,
+        "secondary_contact_symmetric": 5,
         "secondary_contact_asymmetric": 6,
     }
 
