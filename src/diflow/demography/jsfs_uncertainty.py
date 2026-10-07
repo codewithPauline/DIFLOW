@@ -156,6 +156,7 @@ def bootstrap_asymmetric_jsfs(
     block_size_bp: int | None = None,
     polarized: bool = False,
     fit_function: Callable | None = None,
+    model_name: str = "asymmetric_migration",
 ) -> JSFSBootstrapResult:
     """Bootstrap asymmetric migration estimates from projected jSFS data.
 
@@ -166,6 +167,13 @@ def bootstrap_asymmetric_jsfs(
     The default fitter is DIFLOW's multi-start dadi optimizer. fit_function is
     injectable to enable lightweight unit testing and alternative backends.
     """
+    if model_name not in {
+        "asymmetric_migration",
+        "secondary_contact_asymmetric",
+    }:
+        raise ValueError(
+            "model_name must be an asymmetric directional model."
+        )
     if replicates < 2:
         raise ValueError("replicates must be at least 2.")
     if starts < 1:
@@ -220,7 +228,7 @@ def bootstrap_asymmetric_jsfs(
                 fit_kwargs["polarized"] = polarized
             fit = fitter(
                 spectrum,
-                "asymmetric_migration",
+                model_name,
                 **fit_kwargs,
             )
             m_ab = float(fit.best_parameters["m_a_to_b"])
