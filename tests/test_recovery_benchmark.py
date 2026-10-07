@@ -210,3 +210,21 @@ def test_recovery_summary_does_not_treat_string_false_as_stable():
     summary = summarize_recovery(results)
 
     assert summary.iloc[0]["optimizer_stable_rate"] == pytest.approx(0.5)
+
+
+
+def test_recovery_summary_rejects_mixed_truth_magnitudes():
+    results = pd.DataFrame(
+        {
+            "scenario": ["mixed", "mixed"],
+            "success": [True, True],
+            "true_m_a_to_b": [1.0, 2.0],
+            "true_m_b_to_a": [0.25, 0.10],
+            "estimated_m_a_to_b": [0.9, 1.8],
+            "estimated_m_b_to_a": [0.3, 0.2],
+            "optimizer_stable": [True, True],
+        }
+    )
+
+    with pytest.raises(ValueError, match="inconsistent migration truth"):
+        summarize_recovery(results)
