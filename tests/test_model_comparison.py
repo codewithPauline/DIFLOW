@@ -28,3 +28,20 @@ def test_rank_models_and_weights_sum_to_one():
 
 def test_aicc_returns_infinity_for_too_few_observations():
     assert math.isinf(aicc(-10.0, 5, 6))
+
+
+
+def test_symmetric_secondary_contact_is_registered():
+    from diflow.demography.fit_models import MODEL_SPECS
+
+    spec = MODEL_SPECS["secondary_contact_symmetric"]
+    assert spec["names"] == [
+        "nu_a",
+        "nu_b",
+        "isolation_time",
+        "contact_time",
+        "migration",
+    ]
+    assert len(spec["initial"]) == 5
+    assert len(spec["lower"]) == 5
+    assert len(spec["upper"]) == 5
