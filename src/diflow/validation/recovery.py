@@ -243,6 +243,14 @@ def summarize_recovery(
         successful = group[group["success"]].copy()
         truth_ab_all = group["true_m_a_to_b"].to_numpy(float)
         truth_ba_all = group["true_m_b_to_a"].to_numpy(float)
+        if not (
+            np.allclose(truth_ab_all, truth_ab_all[0])
+            and np.allclose(truth_ba_all, truth_ba_all[0])
+        ):
+            raise ValueError(
+                f"scenario {scenario!r} contains inconsistent migration truth."
+            )
+
         inferred_directions = {
             (
                 "symmetric"
