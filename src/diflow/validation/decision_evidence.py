@@ -165,6 +165,7 @@ def run_decision_evidence_benchmark(
         "isolation",
         "symmetric_migration",
         "asymmetric_migration",
+        "secondary_contact_symmetric",
         "secondary_contact_asymmetric",
     )
     parameter_counts = {
