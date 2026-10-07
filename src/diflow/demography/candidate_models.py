@@ -46,6 +46,23 @@ def asymmetric_migration_model(dadi):
     return model
 
 
+def secondary_contact_symmetric_model(dadi):
+    def model(params, ns, pts):
+        nu_a, nu_b, isolation_time, contact_time, migration = params
+        return dadi.Demographics2D.sec_contact_sym_mig(
+            (
+                nu_a,
+                nu_b,
+                migration,
+                isolation_time,
+                contact_time,
+            ),
+            ns,
+            pts,
+        )
+    return model
+
+
 def secondary_contact_asymmetric_model(dadi):
     def model(params, ns, pts):
         nu_a, nu_b, isolation_time, contact_time, m_a_to_b, m_b_to_a = params
