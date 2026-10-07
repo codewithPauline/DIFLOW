@@ -138,7 +138,6 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
             ),
             maxiter=task.maxiter,
             polarized=task.polarized,
-            model_name=directional_model,
         )
         fits[model_name] = result
         scores.append(
@@ -237,6 +236,7 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
             ),
             block_size_bp=task.bootstrap_block_bp,
             polarized=task.polarized,
+            model_name=directional_model,
         )
 
         point_direction_support = directional_support_for_estimate(
