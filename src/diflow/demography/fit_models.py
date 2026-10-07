@@ -10,6 +10,7 @@ from .candidate_models import (
     asymmetric_migration_model,
     no_migration_model,
     secondary_contact_asymmetric_model,
+    secondary_contact_symmetric_model,
     symmetric_migration_model,
 )
 from .comparison import ModelScore, rank_models
@@ -49,6 +50,19 @@ MODEL_SPECS = {
         "initial": [1.0, 1.0, 0.5, 0.5, 0.5],
         "lower": [1e-3, 1e-3, 1e-4, 1e-5, 1e-5],
         "upper": [100.0, 100.0, 20.0, 50.0, 50.0],
+    },
+    "secondary_contact_symmetric": {
+        "builder": secondary_contact_symmetric_model,
+        "names": [
+            "nu_a",
+            "nu_b",
+            "isolation_time",
+            "contact_time",
+            "migration",
+        ],
+        "initial": [1.0, 1.0, 0.5, 0.2, 0.5],
+        "lower": [1e-3, 1e-3, 1e-4, 1e-4, 1e-5],
+        "upper": [100.0, 100.0, 20.0, 20.0, 50.0],
     },
     "secondary_contact_asymmetric": {
         "builder": secondary_contact_asymmetric_model,
@@ -148,6 +162,7 @@ def compare_candidate_models(
         "isolation",
         "symmetric_migration",
         "asymmetric_migration",
+        "secondary_contact_symmetric",
         "secondary_contact_asymmetric",
     ),
     grid_points: tuple[int, int, int] | None = None,
