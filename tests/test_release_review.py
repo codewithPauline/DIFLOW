@@ -15,6 +15,7 @@ def _write_valid_campaign(root):
     pd.DataFrame(
         {
             "scenario": ["symmetric", "moderate_a_to_b", "moderate_b_to_a"],
+            "expected_direction": ["symmetric", "A->B", "B->A"],
             "success_rate": [1.0, 0.98, 0.99],
             "direction_accuracy": [1.0, 0.95, 0.96],
             "false_directional_positive_rate": [0.02, float("nan"), float("nan")],
@@ -273,3 +274,44 @@ def test_release_review_rejects_invalid_linkage_metrics(
 
     with pytest.raises(ValueError, match=error_match):
         review_validation_campaign(root)
+
+
+
+def test_recovery_release_review_uses_expected_direction_labels():
+    from diflow.validation.release_review import ReleaseCriteria, review_recovery_grid
+
+    summary = pd.DataFrame(
+        {
+            "scenario": [
+                "symmetric_high_migration",
+                "custom_directional_case",
+            ],
+            "expected_direction": ["symmetric", "A->B"],
+            "success_rate": [1.0, 1.0],
+            "direction_accuracy": [float("nan"), 0.95],
+            "false_directional_positive_rate": [0.02, float("nan")],
+        }
+    )
+
+    checks = review_recovery_grid(summary, ReleaseCriteria())
+
+    by_metric = {row["metric"]: row for row in checks}
+    assert by_metric["minimum_direction_accuracy"]["observed"] == pytest.approx(0.95)
+    assert by_metric["maximum_false_direction_rate"]["observed"] == pytest.approx(0.02)
+
+
+def test_recovery_release_review_rejects_invalid_expected_direction():
+    from diflow.validation.release_review import ReleaseCriteria, review_recovery_grid
+
+    summary = pd.DataFrame(
+        {
+            "scenario": ["bad"],
+            "expected_direction": ["A=>B"],
+            "success_rate": [1.0],
+            "direction_accuracy": [0.95],
+            "false_directional_positive_rate": [float("nan")],
+        }
+    )
+
+    with pytest.raises(ValueError, match="expected_direction"):
+        review_recovery_grid(summary, ReleaseCriteria())
