@@ -167,6 +167,7 @@ def _fit_full_candidate_set(
         "isolation",
         "symmetric_migration",
         "asymmetric_migration",
+        "secondary_contact_symmetric",
         "secondary_contact_asymmetric",
     )
     fits = {}
