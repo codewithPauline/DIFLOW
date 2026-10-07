@@ -315,3 +315,20 @@ def test_recovery_release_review_rejects_invalid_expected_direction():
 
     with pytest.raises(ValueError, match="expected_direction"):
         review_recovery_grid(summary, ReleaseCriteria())
+
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["require_complete_match", "direction_only"],
+)
+def test_release_review_rejects_string_boolean_metadata(tmp_path, field):
+    root = tmp_path / "results"
+    _write_valid_campaign(root)
+    metadata_path = root / "external_comparison" / "comparison_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata[field] = "False"
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=field):
+        review_validation_campaign(root)
