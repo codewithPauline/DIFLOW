@@ -196,24 +196,53 @@ def _fit_full_candidate_set(
         )
 
     ranking = rank_models(scores, use_aicc=False)
-    asym_row = ranking[ranking["model"] == "asymmetric_migration"].iloc[0]
-    asym_fit = fits["asymmetric_migration"]
-    m_ab = float(asym_fit.best_parameters["m_a_to_b"])
-    m_ba = float(asym_fit.best_parameters["m_b_to_a"])
+    best_model = str(ranking.iloc[0]["model"])
+    directional_models = {
+        "asymmetric_migration",
+        "secondary_contact_asymmetric",
+    }
+    directional_model = (
+        best_model if best_model in directional_models else None
+    )
+
+    if directional_model is None:
+        return {
+            "best_model": best_model,
+            "directional_model": None,
+            "asymmetric_model_weight": 0.0,
+            "estimated_m_a_to_b": 0.0,
+            "estimated_m_b_to_a": 0.0,
+            "estimated_asymmetry": 0.0,
+            "preferred_direction": "none",
+            "asymmetric_optimizer_stable": False,
+            "optimizer_success_fraction": np.nan,
+        }
+
+    directional_row = ranking[
+        ranking["model"] == directional_model
+    ].iloc[0]
+    directional_fit = fits[directional_model]
+    m_ab = float(directional_fit.best_parameters["m_a_to_b"])
+    m_ba = float(directional_fit.best_parameters["m_b_to_a"])
     total = m_ab + m_ba
     asymmetry = 0.0 if total == 0 else (m_ab - m_ba) / total
 
     return {
-        "best_model": str(ranking.iloc[0]["model"]),
-        "asymmetric_model_weight": float(asym_row["akaike_weight"]),
+        "best_model": best_model,
+        "directional_model": directional_model,
+        "asymmetric_model_weight": float(
+            directional_row["akaike_weight"]
+        ),
         "estimated_m_a_to_b": m_ab,
         "estimated_m_b_to_a": m_ba,
         "estimated_asymmetry": asymmetry,
         "preferred_direction": (
             "A->B" if m_ab > m_ba else "B->A" if m_ba > m_ab else "symmetric"
         ),
-        "asymmetric_optimizer_stable": bool(asym_fit.stable),
-        "optimizer_success_fraction": float(asym_fit.converged_fraction),
+        "asymmetric_optimizer_stable": bool(directional_fit.stable),
+        "optimizer_success_fraction": float(
+            directional_fit.converged_fraction
+        ),
     }
 
 
