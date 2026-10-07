@@ -89,6 +89,7 @@ def review_recovery_grid(
     """Review recovery-grid accuracy, false-direction rate, and fit success."""
     required = {
         "scenario",
+        "expected_direction",
         "success_rate",
         "direction_accuracy",
         "false_directional_positive_rate",
@@ -119,8 +120,18 @@ def review_recovery_grid(
         )
     )
 
+    allowed_directions = {"symmetric", "A->B", "B->A"}
+    directions = summary["expected_direction"].astype(str)
+    invalid = ~directions.isin(allowed_directions)
+    if invalid.any():
+        values = sorted(set(directions[invalid]))
+        raise ValueError(
+            "expected_direction contains unsupported labels: "
+            + ", ".join(values)
+        )
+
     directional = summary[
-        summary["scenario"].astype(str) != "symmetric"
+        directions.isin({"A->B", "B->A"})
     ].copy()
     accuracy = _validated_probability_series(
         directional["direction_accuracy"],
@@ -143,7 +154,7 @@ def review_recovery_grid(
     )
 
     symmetric = summary[
-        summary["false_directional_positive_rate"].notna()
+        directions == "symmetric"
     ].copy()
     fpr = _validated_probability_series(
         symmetric["false_directional_positive_rate"],
