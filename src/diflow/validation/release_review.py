@@ -26,6 +26,12 @@ class ReleaseCriteria:
     min_success_rate: float = 0.95
 
 
+def _validate_json_bool(value, name: str) -> bool:
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    raise ValueError(f"{name} must be a JSON boolean.")
+
+
 def _validate_probability(value: float, name: str) -> float:
     value = float(value)
     if not np.isfinite(value) or not 0 <= value <= 1:
@@ -380,14 +386,20 @@ def review_external_comparison(
         return checks
 
     metadata = json.loads(Path(metadata_path).read_text(encoding="utf-8"))
-    strict = bool(metadata.get("require_complete_match", False))
+    strict = _validate_json_bool(
+        metadata.get("require_complete_match", False),
+        "require_complete_match",
+    )
     method_versions = metadata.get("method_versions", {})
     estimands = [
         str(value).strip()
         for value in metadata.get("estimands", [])
         if str(value).strip()
     ]
-    direction_only = bool(metadata.get("direction_only", False))
+    direction_only = _validate_json_bool(
+        metadata.get("direction_only", False),
+        "direction_only",
+    )
 
     checks.extend(
         [
