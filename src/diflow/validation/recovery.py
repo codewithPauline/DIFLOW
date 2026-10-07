@@ -319,7 +319,10 @@ def summarize_recovery(
                     true_ab, true_ba, est_ab, est_ba
                 ),
                 "optimizer_stable_rate": float(
-                    successful["optimizer_stable"].astype(bool).mean()
+                    _coerce_bool_series(
+                        successful["optimizer_stable"],
+                        name="optimizer_stable",
+                    ).mean()
                 ),
             }
         )
