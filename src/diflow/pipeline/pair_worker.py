@@ -138,6 +138,7 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
             ),
             maxiter=task.maxiter,
             polarized=task.polarized,
+            model_name=directional_model,
         )
         fits[model_name] = result
         scores.append(
@@ -151,9 +152,46 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
 
     ranking = rank_models(scores, use_aicc=False)
     best_model = str(ranking.iloc[0]["model"])
-    asym_row = ranking[ranking["model"] == "asymmetric_migration"].iloc[0]
-    asym_weight = float(asym_row["akaike_weight"])
-    asym_fit = fits["asymmetric_migration"]
+    directional_models = {
+        "asymmetric_migration",
+        "secondary_contact_asymmetric",
+    }
+    directional_model = (
+        best_model if best_model in directional_models else None
+    )
+
+    if directional_model is None:
+        row = {
+            **base,
+            "status": "unsupported",
+            "best_model": best_model,
+            "directional_model": None,
+            "preferred_direction": None,
+            "m_a_to_b_scaled": np.nan,
+            "m_b_to_a_scaled": np.nan,
+            "asymmetry_index": np.nan,
+            "asymmetric_model_weight": 0.0,
+            "optimizer_stable": False,
+            "optimizer_success_fraction": np.nan,
+            "decision_reason": (
+                "best-supported demographic model is not asymmetric"
+            ),
+        }
+        ranked = ranking.copy()
+        ranked.insert(0, "population_b", pop_b)
+        ranked.insert(0, "population_a", pop_a)
+        return PairInferenceOutput(
+            pair_index=task.pair_index,
+            row=row,
+            rankings=ranked.to_dict(orient="records"),
+            spectrum=projected.spectrum,
+        )
+
+    directional_row = ranking[
+        ranking["model"] == directional_model
+    ].iloc[0]
+    asym_weight = float(directional_row["akaike_weight"])
+    asym_fit = fits[directional_model]
     m_a_to_b = float(asym_fit.best_parameters["m_a_to_b"])
     m_b_to_a = float(asym_fit.best_parameters["m_b_to_a"])
 
@@ -172,6 +210,7 @@ def infer_pair_task(task: PairInferenceTask) -> PairInferenceOutput:
         **base,
         "status": status,
         "best_model": best_model,
+        "directional_model": directional_model,
         "preferred_direction": preferred,
         "m_a_to_b_scaled": m_a_to_b,
         "m_b_to_a_scaled": m_b_to_a,
